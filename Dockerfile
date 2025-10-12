@@ -11,6 +11,22 @@ RUN apt-get update && \
     git \
     ripgrep \
     fd-find \
+    fzf \
+    build-essential \
+    curl \
+    coreutils \
+    pandoc \
+    python3 \
+    python3-pip \
+    clang \
+    gdb \
+    cmake \
+    clangd \
+    valgrind \
+    sudo \
+    wget \
+    unzip \
+    fontconfig \
     emacs \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,6 +41,9 @@ USER $UNAME
 # Define o diretório de trabalho no home do usuário
 WORKDIR /home/$UNAME
 
+# Instala a norminette da 42
+RUN python3 -m pip install -U norminette --break-system-packages
+
 # Clona o repositório do Doom Emacs.
 # A flag --depth 1 é usada para clonar apenas o commit mais recente, economizando espaço.
 RUN git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
@@ -32,5 +51,15 @@ RUN git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
 # Cria o diretório de configuração padrão do Doom Emacs.
 RUN mkdir -p ~/.config/doom
 
+# Instala as fontes Nerd Fonts (JetBrains Mono e Fira Code)
+RUN mkdir -p ~/.local/share/fonts && \
+    cd ~/.local/share/fonts && \
+    wget https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip && \
+    wget https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip && \
+    unzip -o JetBrainsMono.zip && \
+    unzip -o FiraCode.zip && \
+    rm JetBrainsMono.zip FiraCode.zip && \
+    fc-cache -fv
+
 # Instala o Doom Emacs
-RUN ~/.config/emacs/bin/doom install
+RUN ~/.config/emacs/bin/doom install --force --fonts --install --aot
