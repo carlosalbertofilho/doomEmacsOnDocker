@@ -27,6 +27,7 @@ RUN apt-get update && \
     wget \
     unzip \
     fontconfig \
+    libgccjit-14-dev \
     emacs \
     && rm -rf /var/lib/apt/lists/*
 
@@ -60,6 +61,10 @@ RUN mkdir -p ~/.local/share/fonts && \
     unzip -o FiraCode.zip && \
     rm JetBrainsMono.zip FiraCode.zip && \
     fc-cache -fv
+
+# Limita o número de processos paralelos para a compilação nativa AOT
+# para evitar consumo excessivo de memória durante o build.
+ENV NATIVE_FULL_AOT_JOBS=8
 
 # Instala o Doom Emacs
 RUN ~/.config/emacs/bin/doom install --force --fonts --install --aot
