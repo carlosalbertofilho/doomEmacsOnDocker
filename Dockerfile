@@ -66,6 +66,7 @@ RUN mkdir -p ~/.local/share/fonts && \
 # Limita o número de processos paralelos para a compilação nativa AOT
 # para evitar consumo excessivo de memória durante o build.
 ENV NATIVE_FULL_AOT_JOBS=8
+ENV TERM=xterm-256color
 
 # Instala o Doom Emacs
 RUN ~/.config/emacs/bin/doom install --force --fonts --install --aot
