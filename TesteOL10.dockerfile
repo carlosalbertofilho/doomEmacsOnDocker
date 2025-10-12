@@ -1,18 +1,19 @@
-# Usa a imagem padrão do Debian
-FROM debian:latest
+# Usa a imagem padrão do Oracle Linux 10 Slim
+FROM oraclelinux:10-slim
 
 # Define argumentos de build para o nome e ID do usuário
 ARG UNAME
 ARG UID
 
-# Atualiza a lista de pacotes e instala as dependências
-RUN apt-get update && \
-    apt-get install -y \
+# Atualiza a lista de pacotes e instala as dependências usando dnf
+RUN dnf -y install oracle-epel-release-el10 && \
+    dnf -y update && \
+    dnf -y install \
     git \
     ripgrep \
     fd-find \
     fzf \
-    build-essential \
+    "Development Tools" \
     curl \
     coreutils \
     pandoc \
@@ -27,9 +28,9 @@ RUN apt-get update && \
     wget \
     unzip \
     fontconfig \
-    libgccjit-14-dev \
-    emacs \
-    && rm -rf /var/lib/apt/lists/*
+    libgccjit-devel \
+    emacs && \
+    dnf clean all
 
 # Cria um grupo e um usuário com o mesmo UID e GID do host
 RUN groupadd -g $UID $UNAME
