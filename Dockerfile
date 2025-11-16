@@ -1,50 +1,84 @@
 # Usa a imagem padrão do Debian
 FROM debian:latest
 
-# Define argumentos de build para o nome e ID do usuário
-ARG UNAME
-ARG UID
-
 # Atualiza a lista de pacotes e instala as dependências
 RUN apt-get update && \
     apt-get install -y \
+    # Ferramentas essenciais do sistema
+    build-essential \
+    coreutils \
+    sudo \
+    wget \
+    curl \
+    unzip \
+    fontconfig \
+    # Controle de versão
     git \
+    # Ferramentas de busca e navegação
     ripgrep \
     fd-find \
     fzf \
-    build-essential \
-    curl \
-    coreutils \
-    pandoc \
-    python3 \
-    python3-pip \
+    # Desenvolvimento C/C++
     clang \
+    clangd \
     gdb \
     cmake \
-    clangd \
     valgrind \
-    sudo \
-    wget \
-    unzip \
-    ispell \
-    fontconfig \
     libgccjit-14-dev \
+    # Python
+    python3 \
+    python3-pip \
+    # Documentação e conversão
+    pandoc \
+    # Editor e correção ortográfica
     emacs \
+    ispell \
+    # GPG e criptografia
+    gnupg \
+    gnupg2 \
+    gpg-agent \
+    pinentry-curses \
+    pinentry-gtk2 \
+    dirmngr \
     && rm -rf /var/lib/apt/lists/*
 
+# Define argumentos de build para o nome e ID do usuário
+ARG UID
+ARG GID
+
 # Cria um grupo e um usuário com o mesmo UID e GID do host
-RUN groupadd -g $UID $UNAME
-RUN useradd -u $UID -g $UID -m -s /bin/bash $UNAME
-RUN echo "$UNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN groupadd -g $GID $UNAME
+RUN useradd -u $UID -g $GID -m -s /bin/bash dev
+RUN echo "dev ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Define o novo usuário como o usuário padrão
-USER $UNAME
+USER dev
 
 # Define o diretório de trabalho no home do usuário
-WORKDIR /home/$UNAME
+WORKDIR /home/dev
+
+# Configura o GPG para o usuário
+RUN mkdir -p ~/.gnupg && \
+    chmod 700 ~/.gnupg && \
+    echo "use-agent" > ~/.gnupg/gpg.conf && \
+    echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && \
+    echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf && \
+    chmod 600 ~/.gnupg/gpg.conf ~/.gnupg/gpg-agent.conf
 
 # Instala a norminette da 42
 RUN python3 -m pip install -U norminette --break-system-packages
+
+# Instala a norminette da 42
+RUN python3 -m pip install -U norminette --break-system-packages
+
+# Descomenta GCC_COLORS e aliases no bashrc (incluindo os com indentação)
+RUN sed -i -E 's/^(\s*)#(export GCC_COLORS=|alias (ll|la|l|dir|vdir|grep|fgrep|egrep)=)/\1\2/g' ~/.bashrc
+
+# Ajusta o PATH e configurações do shell
+RUN echo '' >> ~/.bashrc && \
+    echo '# PATH Configuration' >> ~/.bashrc && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && \
+    echo '' >> ~/.bashrc
 
 # Clona o repositório do Doom Emacs.
 # A flag --depth 1 é usada para clonar apenas o commit mais recente, economizando espaço.

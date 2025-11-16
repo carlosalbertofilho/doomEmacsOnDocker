@@ -42,17 +42,10 @@ Siga os passos abaixo para construir a imagem e executar o contêiner.
 
 O `Dockerfile` cria um usuário dentro do contêiner com o mesmo nome e ID do seu usuário local para evitar problemas de permissão com arquivos montados.
 
-Primeiro, obtenha seu nome de usuário e ID:
-
-```bash
-echo "UNAME=$(whoami)" # Nome de usuário
-echo "UID=$(id -u)"   # ID de usuário
-```
-
 Em seguida, no diretório do projeto, construa a imagem com o comando:
 
 ```bash
-docker build --build-arg UNAME=$(whoami) --build-arg UID=$(id -u) -t emacs-dev .
+docker build --build-arg UID=$(id -u)  --build-arg UNAME=$(id -g) -t emacs-dev .
 ```
 
 Este comando cria uma imagem local chamada `emacs-dev`.
@@ -65,6 +58,8 @@ Para iniciar o Emacs, você precisa executar o contêiner, montando os diretóri
 docker run -it --rm \
   -v "$HOME/Projects:/home/$(whoami)/Projects:z" \
   -v "$HOME/.ssh:/home/$(whoami)/.ssh:ro,z" \
+  --ipc=host \
+  -v /dev/shm:/dev/shm \
   emacs-dev
 ```
 
