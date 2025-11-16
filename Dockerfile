@@ -47,7 +47,7 @@ ARG UID
 ARG GID
 
 # Cria um grupo e um usuário com o mesmo UID e GID do host
-RUN groupadd -g $GID $UNAME
+RUN groupadd -g $GID dev
 RUN useradd -u $UID -g $GID -m -s /bin/bash dev
 RUN echo "dev ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
