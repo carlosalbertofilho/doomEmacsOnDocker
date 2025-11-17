@@ -102,7 +102,7 @@ RUN touch ~/.zshrc && \
 RUN git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
 
 # Cria o diretório de configuração padrão do Doom Emacs.
-RUN mkdir -p ~/.config/doom
+RUN git clone --depth 1 https://carlosalbertofilho/emacs-on-docker.git ~/.config/doom
 
 # Instala fontes recomendadas para o Doom Emacs
 RUN mkdir -p ~/.local/share/fonts && \
