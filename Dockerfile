@@ -28,6 +28,7 @@ RUN apt-get update && \
     # Python
     python3 \
     python3-pip \
+    pipx \
     # Documentação e conversão
     pandoc \
     # Editor e correção ortográfica
@@ -40,6 +41,10 @@ RUN apt-get update && \
     pinentry-curses \
     pinentry-gtk2 \
     dirmngr \
+    # Shell
+    zsh \
+    zsh-autosuggestions \
+    zsh-syntax-highlighting \
     && rm -rf /var/lib/apt/lists/*
 
 # Define argumentos de build para o nome e ID do usuário
@@ -47,8 +52,11 @@ ARG UID
 ARG GID
 
 # Cria um grupo e um usuário com o mesmo UID e GID do host
-RUN groupadd -g $GID dev
-RUN useradd -u $UID -g $GID -m -s /bin/bash dev
+# Verifica se o grupo já existe antes de criar
+RUN if ! getent group $GID > /dev/null 2>&1; then \
+        groupadd -g $GID dev; \
+    fi
+RUN useradd -u $UID -g $GID -m -s /bin/zsh dev
 RUN echo "dev ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Define o novo usuário como o usuário padrão
@@ -65,20 +73,29 @@ RUN mkdir -p ~/.gnupg && \
     echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf && \
     chmod 600 ~/.gnupg/gpg.conf ~/.gnupg/gpg-agent.conf
 
-# Instala a norminette da 42
-RUN python3 -m pip install -U norminette --break-system-packages
+# Instala a norminette da 42 usando pipx
+RUN pipx install norminette
 
-# Instala a norminette da 42
-RUN python3 -m pip install -U norminette --break-system-packages
+# Instala o Starship prompt
+RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 
-# Descomenta GCC_COLORS e aliases no bashrc (incluindo os com indentação)
-RUN sed -i -E 's/^(\s*)#(export GCC_COLORS=|alias (ll|la|l|dir|vdir|grep|fgrep|egrep)=)/\1\2/g' ~/.bashrc
-
-# Ajusta o PATH e configurações do shell
-RUN echo '' >> ~/.bashrc && \
-    echo '# PATH Configuration' >> ~/.bashrc && \
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && \
-    echo '' >> ~/.bashrc
+# Configura o Zsh
+RUN touch ~/.zshrc && \
+    echo '# PATH Configuration' >> ~/.zshrc && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && \
+    echo '' >> ~/.zshrc && \
+    echo '# Zsh plugins' >> ~/.zshrc && \
+    echo 'source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh' >> ~/.zshrc && \
+    echo 'source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' >> ~/.zshrc && \
+    echo '' >> ~/.zshrc && \
+    echo '# Starship prompt' >> ~/.zshrc && \
+    echo 'eval "$(starship init zsh)"' >> ~/.zshrc && \
+    echo '' >> ~/.zshrc && \
+    echo '# Aliases' >> ~/.zshrc && \
+    echo 'alias ll="ls -lh"' >> ~/.zshrc && \
+    echo 'alias la="ls -lah"' >> ~/.zshrc && \
+    echo 'alias l="ls -CF"' >> ~/.zshrc && \
+    echo 'alias n42="norminette"' >> ~/.zshrc
 
 # Clona o repositório do Doom Emacs.
 # A flag --depth 1 é usada para clonar apenas o commit mais recente, economizando espaço.
@@ -87,14 +104,22 @@ RUN git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
 # Cria o diretório de configuração padrão do Doom Emacs.
 RUN mkdir -p ~/.config/doom
 
-# Instala as fontes Nerd Fonts (JetBrains Mono e Fira Code)
+# Instala fontes recomendadas para o Doom Emacs
 RUN mkdir -p ~/.local/share/fonts && \
     cd ~/.local/share/fonts && \
-    wget https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip && \
-    wget https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip && \
-    unzip -o JetBrainsMono.zip && \
-    unzip -o FiraCode.zip && \
-    rm JetBrainsMono.zip FiraCode.zip && \
+    # Nerd Fonts para ícones e símbolos
+    wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip && \
+    wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip && \
+    wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevka.zip && \
+    wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/SourceCodePro.zip && \
+    # Descompacta as fontes
+    unzip -oq JetBrainsMono.zip && \
+    unzip -oq FiraCode.zip && \
+    unzip -oq Iosevka.zip && \
+    unzip -oq SourceCodePro.zip && \
+    # Remove os arquivos zip
+    rm -f *.zip && \
+    # Atualiza o cache de fontes
     fc-cache -fv
 
 # Limita o número de processos paralelos para a compilação nativa AOT
