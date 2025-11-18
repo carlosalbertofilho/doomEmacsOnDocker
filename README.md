@@ -259,26 +259,26 @@ export OPENAI_API_KEY="sk-..."
 export GEMINI_API_KEY="..."
 ```
 
-### Keybindings (`SPC a`)
+### Keybindings (`SPC A`)
 
-- **`SPC a a`** - Ask about (perguntar sobre código selecionado)
-- **`SPC a c`** - Chat com AI
-- **`SPC a d`** - Define word (definir palavra)
-- **`SPC a s`** - Summarize (resumir texto/código)
-- **`SPC a r`** - Code review (revisar código)
-- **`SPC a i`** - Improve code (melhorar código)
-- **`SPC a C`** - Complete code (completar código)
-- **`SPC a A`** - Add code (adicionar código)
-- **`SPC a t`** - Translate (traduzir texto)
-- **`SPC a S`** - Session management (gerenciar sessões)
-- **`SPC a p`** - Switch provider (trocar entre GPT-4, GPT-3.5, Gemini)
+- **`SPC A a`** - Ask about (perguntar sobre código selecionado)
+- **`SPC A c`** - Chat com AI
+- **`SPC A d`** - Define word (definir palavra)
+- **`SPC A s`** - Summarize (resumir texto/código)
+- **`SPC A r`** - Code review (revisar código)
+- **`SPC A i`** - Improve code (melhorar código)
+- **`SPC A C`** - Complete code (completar código)
+- **`SPC A A`** - Add code (adicionar código)
+- **`SPC A t`** - Translate (traduzir texto)
+- **`SPC A S`** - Session management (gerenciar sessões)
+- **`SPC A p`** - Switch provider (trocar entre GPT-4, GPT-3.5, Gemini)
 
 ### Exemplos de Uso
 
-1. **Code Review**: Selecione uma função e pressione `SPC a r` para obter sugestões de melhorias
-2. **Explicar Código**: Selecione código complexo e use `SPC a a` para pedir explicação
-3. **Refatoração**: Selecione código e use `SPC a i` para sugerir melhorias
-4. **Tradução**: Selecione texto e use `SPC a t` para traduzir
+1. **Code Review**: Selecione uma função e pressione `SPC A r` para obter sugestões de melhorias
+2. **Explicar Código**: Selecione código complexo e use `SPC A a` para pedir explicação
+3. **Refatoração**: Selecione código e use `SPC A i` para sugerir melhorias
+4. **Tradução**: Selecione texto e use `SPC A t` para traduzir
 
 **Nota**: Após adicionar o Ellama, execute `doom sync` dentro do container para instalar o pacote
 n42 ft_strlen.c           # Verifica com norminette

@@ -195,10 +195,10 @@
   ;;          :key (getenv "OPENAI_API_KEY")
   ;;          :chat-model "gpt-3.5-turbo")))
   
-  ;; Keybindings
+  ;; Keybindings - Using SPC A (uppercase) to avoid conflicts with embark
   (map! :leader
-        (:prefix ("a" . "AI")
-         :desc "Ask Ellama" "a" #'ellama-ask-about
+        (:prefix ("A" . "AI Assistant")
+         :desc "Ask about selection" "a" #'ellama-ask-about
          :desc "Chat" "c" #'ellama-chat
          :desc "Define word" "d" #'ellama-define-word
          :desc "Summarize" "s" #'ellama-summarize
