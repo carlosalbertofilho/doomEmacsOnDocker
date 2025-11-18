@@ -152,3 +152,99 @@
   ;; Norminette check (installed via pipx)
   (when (executable-find "norminette")
     (eshell/alias "n42" "norminette $*")))
+
+;; =============================================================================
+;; AI ASSISTANTS - ELLAMA
+;; =============================================================================
+
+(use-package! ellama
+  :defer t
+  :init
+  ;; General settings
+  (setq ellama-language "English")
+  (setq ellama-sessions-directory (expand-file-name "ellama-sessions" doom-cache-dir))
+  
+  :config
+  ;; Load LLM backends after ellama is loaded
+  (require 'llm-openai nil t)
+  
+  ;; Default provider: OpenAI GPT-4
+  ;; API key should be set via environment variable OPENAI_API_KEY
+  (when (and (featurep 'llm-openai)
+             (getenv "OPENAI_API_KEY"))
+    (setq ellama-provider
+          (make-llm-openai
+           :key (getenv "OPENAI_API_KEY")
+           :chat-model "gpt-4")))
+  
+  ;; Alternative providers configuration
+  ;; Uncomment and configure the one you want to use:
+  
+  ;; Google Gemini
+  ;; (when (getenv "GEMINI_API_KEY")
+  ;;   (require 'llm-gemini)
+  ;;   (setq ellama-provider
+  ;;         (make-llm-gemini
+  ;;          :key (getenv "GEMINI_API_KEY")
+  ;;          :chat-model "gemini-pro")))
+  
+  ;; OpenAI GPT-3.5 (faster, cheaper alternative)
+  ;; (when (getenv "OPENAI_API_KEY")
+  ;;   (setq ellama-provider
+  ;;         (make-llm-openai
+  ;;          :key (getenv "OPENAI_API_KEY")
+  ;;          :chat-model "gpt-3.5-turbo")))
+  
+  ;; Keybindings
+  (map! :leader
+        (:prefix ("a" . "AI")
+         :desc "Ask Ellama" "a" #'ellama-ask-about
+         :desc "Chat" "c" #'ellama-chat
+         :desc "Define word" "d" #'ellama-define-word
+         :desc "Summarize" "s" #'ellama-summarize
+         :desc "Code review" "r" #'ellama-code-review
+         :desc "Improve code" "i" #'ellama-code-improve
+         :desc "Complete code" "C" #'ellama-code-complete
+         :desc "Add code" "A" #'ellama-code-add
+         :desc "Translate" "t" #'ellama-translate
+         :desc "Session" "S" #'ellama-session
+         :desc "Switch provider" "p" #'my/ellama-switch-provider)))
+
+;; Helper function to switch between providers
+(defun my/ellama-switch-provider (provider)
+  "Switch Ellama provider interactively."
+  (interactive
+   (list (intern (completing-read "Select provider: "
+                                   '("openai-gpt4" "openai-gpt3.5" "gemini")
+                                   nil t))))
+  (require 'llm-openai)
+  (pcase provider
+    ('openai-gpt4
+     (if (getenv "OPENAI_API_KEY")
+         (progn
+           (setq ellama-provider
+                 (make-llm-openai
+                  :key (getenv "OPENAI_API_KEY")
+                  :chat-model "gpt-4"))
+           (message "Switched to OpenAI GPT-4"))
+       (user-error "OPENAI_API_KEY environment variable not set")))
+    ('openai-gpt3.5
+     (if (getenv "OPENAI_API_KEY")
+         (progn
+           (setq ellama-provider
+                 (make-llm-openai
+                  :key (getenv "OPENAI_API_KEY")
+                  :chat-model "gpt-3.5-turbo"))
+           (message "Switched to OpenAI GPT-3.5 Turbo"))
+       (user-error "OPENAI_API_KEY environment variable not set")))
+    ('gemini
+     (if (getenv "GEMINI_API_KEY")
+         (progn
+           (require 'llm-gemini)
+           (setq ellama-provider
+                 (make-llm-gemini
+                  :key (getenv "GEMINI_API_KEY")
+                  :chat-model "gemini-pro"))
+           (message "Switched to Google Gemini Pro"))
+       (user-error "GEMINI_API_KEY environment variable not set")))
+    (_ (user-error "Unknown provider"))))

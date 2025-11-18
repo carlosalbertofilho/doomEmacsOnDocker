@@ -52,3 +52,10 @@
 ;; (unpin! pinned-package another-pinned-package)
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;; (unpin! t)
+
+;; =============================================================================
+;; AI ASSISTANTS
+;; =============================================================================
+
+;; Ellama - AI assistant with multiple providers support
+(package! ellama)

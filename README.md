@@ -41,6 +41,10 @@ O contêiner é baseado em **Debian** e inclui uma seleção de ferramentas esse
   - **Header 42** automático com keybinding `SPC c h`
   - **Flycheck + Norminette** com verificação em tempo real e highlight de erros
   - Atualização automática do header ao salvar
+  - **Aliases Eshell** otimizados para projetos C
+- **AI Assistants**:
+  - **Ellama** com suporte para OpenAI GPT-4, GPT-3.5 e Google Gemini
+  - Code completion, review, refactoring e chat
 
 -----
 
@@ -226,6 +230,57 @@ cc42 ft_strlen.c          # Compila
 r42                       # Executa
 cr42 ft_strlen.c          # Compila e executa
 val42 ft_strlen.c         # Testa com valgrind
+n42 ft_strlen.c           # Verifica com norminette
+```
+
+-----
+
+## AI Assistants - Ellama
+
+Integração com assistentes de IA para aumentar a produtividade no desenvolvimento.
+
+### Provedores Suportados
+
+- **OpenAI GPT-4** (padrão) - Melhor qualidade de resposta
+- **OpenAI GPT-3.5 Turbo** - Mais rápido e econômico
+- **Google Gemini Pro** - Alternativa do Google
+
+### Configuração de API Keys
+
+Defina as variáveis de ambiente antes de iniciar o container:
+
+```bash
+# Adicione ao comando docker run:
+-e OPENAI_API_KEY="sk-sua-chave-aqui"
+-e GEMINI_API_KEY="sua-chave-gemini"
+
+# Ou adicione ao seu ~/.zshrc no host:
+export OPENAI_API_KEY="sk-..."
+export GEMINI_API_KEY="..."
+```
+
+### Keybindings (`SPC a`)
+
+- **`SPC a a`** - Ask about (perguntar sobre código selecionado)
+- **`SPC a c`** - Chat com AI
+- **`SPC a d`** - Define word (definir palavra)
+- **`SPC a s`** - Summarize (resumir texto/código)
+- **`SPC a r`** - Code review (revisar código)
+- **`SPC a i`** - Improve code (melhorar código)
+- **`SPC a C`** - Complete code (completar código)
+- **`SPC a A`** - Add code (adicionar código)
+- **`SPC a t`** - Translate (traduzir texto)
+- **`SPC a S`** - Session management (gerenciar sessões)
+- **`SPC a p`** - Switch provider (trocar entre GPT-4, GPT-3.5, Gemini)
+
+### Exemplos de Uso
+
+1. **Code Review**: Selecione uma função e pressione `SPC a r` para obter sugestões de melhorias
+2. **Explicar Código**: Selecione código complexo e use `SPC a a` para pedir explicação
+3. **Refatoração**: Selecione código e use `SPC a i` para sugerir melhorias
+4. **Tradução**: Selecione texto e use `SPC a t` para traduzir
+
+**Nota**: Após adicionar o Ellama, execute `doom sync` dentro do container para instalar o pacote
 n42 ft_strlen.c           # Verifica com norminette
 ```
 
