@@ -93,3 +93,8 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+
+
+;; Load and enable 42 header
+(load! "header42")
+(header-42-enable)
