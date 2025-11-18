@@ -53,8 +53,9 @@ See URL `https://github.com/42School/norminette' for more information."
   ((error line-start
           "Error: " (id (one-or-more (not (any space))))
           (one-or-more space)
-          "(line:" (one-or-more space) line "," (one-or-more space) "col:" (one-or-more space) column "):"
-          (one-or-more space)
+          "(line:" (zero-or-more space) line "," (zero-or-more space) 
+          "col:" (zero-or-more space) column "):"
+          (zero-or-more space)
           (message (one-or-more not-newline))
           line-end)
    (error line-start
@@ -62,8 +63,9 @@ See URL `https://github.com/42School/norminette' for more information."
    (warning line-start
             "Notice: " (id (one-or-more (not (any space))))
             (one-or-more space)
-            "(line:" (one-or-more space) line "," (one-or-more space) "col:" (one-or-more space) column "):"
-            (one-or-more space)
+            "(line:" (zero-or-more space) line "," (zero-or-more space)
+            "col:" (zero-or-more space) column "):"
+            (zero-or-more space)
             (message (one-or-more not-newline))
             line-end)
    (info line-start
@@ -118,8 +120,9 @@ Checks C header files for compliance with 42 coding standards."
   ((error line-start
           "Error: " (id (one-or-more (not (any space))))
           (one-or-more space)
-          "(line:" (one-or-more space) line "," (one-or-more space) "col:" (one-or-more space) column "):"
-          (one-or-more space)
+          "(line:" (zero-or-more space) line "," (zero-or-more space)
+          "col:" (zero-or-more space) column "):"
+          (zero-or-more space)
           (message (one-or-more not-newline))
           line-end)
    (error line-start
@@ -127,8 +130,9 @@ Checks C header files for compliance with 42 coding standards."
    (warning line-start
             "Notice: " (id (one-or-more (not (any space))))
             (one-or-more space)
-            "(line:" (one-or-more space) line "," (one-or-more space) "col:" (one-or-more space) column "):"
-            (one-or-more space)
+            "(line:" (zero-or-more space) line "," (zero-or-more space)
+            "col:" (zero-or-more space) column "):"
+            (zero-or-more space)
             (message (one-or-more not-newline))
             line-end))
   :error-filter
