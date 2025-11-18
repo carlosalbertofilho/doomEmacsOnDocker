@@ -45,6 +45,7 @@ RUN apt-get update && \
     zsh \
     zsh-autosuggestions \
     zsh-syntax-highlighting \
+    shellcheck \
     && rm -rf /var/lib/apt/lists/*
 
 # Define argumentos de build para o nome e ID do usuário
@@ -83,6 +84,7 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 RUN touch ~/.zshrc && \
     echo '# PATH Configuration' >> ~/.zshrc && \
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && \
+    echo 'export PATH="$HOME/.config/emacs/bin:$PATH"' >> ~/.zshrc && \
     echo '' >> ~/.zshrc && \
     echo '# Zsh plugins' >> ~/.zshrc && \
     echo 'source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh' >> ~/.zshrc && \
@@ -102,7 +104,10 @@ RUN touch ~/.zshrc && \
 RUN git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
 
 # Cria o diretório de configuração padrão do Doom Emacs.
-RUN git clone --depth 1 https://carlosalbertofilho/emacs-on-docker.git ~/.config/doom
+RUN mkdir -p ~/.config/doom
+
+# Copia os arquivos de configuração do Doom
+COPY --chown=dev:dev init.el config.el packages.el /home/dev/.config/doom/
 
 # Instala fontes recomendadas para o Doom Emacs
 RUN mkdir -p ~/.local/share/fonts && \
@@ -112,11 +117,13 @@ RUN mkdir -p ~/.local/share/fonts && \
     wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip && \
     wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevka.zip && \
     wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/SourceCodePro.zip && \
+    wget -q https://github.com/ryanoasis/nerd-fonts/releases/latest/download/NerdFontsSymbolsOnly.zip && \
     # Descompacta as fontes
     unzip -oq JetBrainsMono.zip && \
     unzip -oq FiraCode.zip && \
     unzip -oq Iosevka.zip && \
     unzip -oq SourceCodePro.zip && \
+    unzip -oq NerdFontsSymbolsOnly.zip && \
     # Remove os arquivos zip
     rm -f *.zip && \
     # Atualiza o cache de fontes
@@ -129,3 +136,6 @@ ENV TERM=xterm-256color
 
 # Instala o Doom Emacs
 RUN ~/.config/emacs/bin/doom install --force --fonts --install --aot
+
+# Sincroniza a configuração do Doom após copiar os arquivos
+RUN ~/.config/emacs/bin/doom sync
