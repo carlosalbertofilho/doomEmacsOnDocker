@@ -113,7 +113,7 @@ RUN git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
 RUN mkdir -p ~/.config/doom
 
 # Copia os arquivos de configuração do Doom
-COPY --chown=dev:dev *.el /home/dev/.config/doom/
+COPY --chown=$UID:$GID *.el /home/dev/.config/doom/
 
 # Instala fontes recomendadas para o Doom Emacs
 RUN mkdir -p ~/.local/share/fonts && \
