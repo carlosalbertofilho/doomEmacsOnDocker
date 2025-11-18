@@ -95,6 +95,32 @@
 ;; they are implemented.
 
 
+;; =============================================================================
+;; 42 SCHOOL CONFIGURATION
+;; =============================================================================
+
 ;; Load and enable 42 header
 (load! "header42")
 (header-42-enable)
+
+;; Load and setup Flycheck Norminette integration
+(load! "flycheck-norminette")
+
+(after! flycheck
+  ;; Setup norminette checker
+  (flycheck-norminette-setup)
+  
+  ;; Auto-enable norminette checking for C files
+  (add-hook 'c-mode-hook #'flycheck-norminette-auto-enable)
+  
+  ;; Additional keybindings for norminette
+  (map! :map c-mode-map
+        :localleader
+        :desc "Check with norminette" "n" #'flycheck-norminette-check-buffer
+        :desc "Toggle norminette" "N" #'flycheck-norminette-toggle)
+  
+  ;; Customize flycheck display for better readability
+  (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
+  
+  ;; Show error count in modeline
+  (setq flycheck-mode-line-prefix "✓"))
