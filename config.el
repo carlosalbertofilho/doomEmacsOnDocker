@@ -124,3 +124,31 @@
   
   ;; Show error count in modeline
   (setq flycheck-mode-line-prefix "✓"))
+
+;; =============================================================================
+;; ESHELL CONFIGURATION
+;; =============================================================================
+
+(after! eshell
+  ;; ------------------------------
+  ;; ALIASES for 42 projects (C)
+  ;; ------------------------------
+  
+  ;; Compile with 42 standard flags
+  (eshell/alias "cc42" "cc -Wall -Wextra -Werror $* -o a.out")
+  
+  ;; Run program
+  (eshell/alias "r42" "./a.out")
+  
+  ;; Clean binary
+  (eshell/alias "clean42" "rm -f a.out")
+  
+  ;; Compile and run directly
+  (eshell/alias "cr42" "cc42 $* && ./a.out")
+  
+  ;; Compile with valgrind
+  (eshell/alias "val42" "cc42 $* && valgrind --leak-check=full ./a.out")
+  
+  ;; Norminette check (installed via pipx)
+  (when (executable-find "norminette")
+    (eshell/alias "n42" "norminette $*")))

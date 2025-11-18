@@ -29,13 +29,18 @@ O contêiner é baseado em **Debian** e inclui uma seleção de ferramentas esse
   - `fzf`
   - `curl`
   - `pandoc`
+  - `shellcheck` (linter para shell scripts)
 - **Suporte a Python**:
   - `python3`, `pip` e `pipx`
   - `norminette` (para estudantes da 42, instalada via pipx)
 - **Fontes Nerd Fonts**:
-  - JetBrains Mono, Fira Code, Iosevka, Source Code Pro
+  - JetBrains Mono, Fira Code, Iosevka, Source Code Pro, Symbols Only
 - **GPG/Criptografia**:
   - Configuração completa de GPG para commits assinados
+- **Integração 42 School**:
+  - **Header 42** automático com keybinding `SPC c h`
+  - **Flycheck + Norminette** com verificação em tempo real e highlight de erros
+  - Atualização automática do header ao salvar
 
 -----
 
@@ -165,5 +170,62 @@ Instalada via `pipx` em ambiente isolado. Execute com `norminette` ou use o alia
 Configuração de GPG pronta para commits assinados. Monte seu diretório `~/.gnupg` se necessário:
 ```bash
 -v "$HOME/.gnupg:/home/dev/.gnupg:z"
+```
+
+-----
+
+## Funcionalidades 42 School
+
+Este ambiente inclui integração completa com as ferramentas da 42 School:
+
+### Header 42 Automático
+
+O header padrão da 42 é inserido e atualizado automaticamente:
+
+- **`SPC c h`** - Insere ou atualiza o header 42
+- **Atualização automática** - O campo "Updated" é atualizado automaticamente ao salvar
+- **Suporte a variáveis de ambiente** - Usa `FT_LOGIN` ou `USER` para nome do autor
+
+### Verificação com Norminette
+
+Integração do Flycheck com a Norminette para verificação em tempo real:
+
+- **Verificação automática** ao salvar arquivos `.c` e `.h`
+- **Highlight de erros** diretamente nas linhas com problemas
+- **Mensagens contextualizadas** com dicas úteis para erros comuns
+- **Keybindings**:
+  - **`SPC m n`** (ou `, n`) - Executar verificação manual
+  - **`SPC m N`** (ou `, N`) - Ativar/desativar verificação automática
+
+### Fontes Configuradas
+
+Quatro opções de Nerd Fonts prontas para uso no `config.el`:
+
+- **Fira Code** (padrão) - Excelente suporte a ligaduras
+- **JetBrains Mono** - Muito popular, ótima legibilidade
+- **Iosevka** - Fonte estreita, maximiza espaço horizontal
+- **Source Code Pro** - Clássica da Adobe, altamente legível
+
+Para trocar de fonte, edite `~/.config/doom/config.el` e descomente a opção desejada.
+
+### Eshell Aliases para 42
+
+Aliases pré-configurados no Eshell (`SPC o e`) para agilizar o workflow:
+
+- **`cc42 file.c`** - Compila com flags da 42 (`-Wall -Wextra -Werror`)
+- **`r42`** - Executa `./a.out`
+- **`clean42`** - Remove o binário `a.out`
+- **`cr42 file.c`** - Compila e executa diretamente
+- **`val42 file.c`** - Compila e executa com valgrind (leak check completo)
+- **`n42 file.c`** - Executa norminette no arquivo
+
+**Exemplo de uso:**
+```bash
+# No Eshell (SPC o e)
+cc42 ft_strlen.c          # Compila
+r42                       # Executa
+cr42 ft_strlen.c          # Compila e executa
+val42 ft_strlen.c         # Testa com valgrind
+n42 ft_strlen.c           # Verifica com norminette
 ```
 
