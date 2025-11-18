@@ -46,7 +46,13 @@ RUN apt-get update && \
     zsh-autosuggestions \
     zsh-syntax-highlighting \
     shellcheck \
+    # Locale para suporte UTF-8
+    locales \
     && rm -rf /var/lib/apt/lists/*
+
+# Configura locale para suporte UTF-8 (necessário para ícones)
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen
 
 # Define argumentos de build para o nome e ID do usuário
 ARG UID
@@ -133,6 +139,9 @@ RUN mkdir -p ~/.local/share/fonts && \
 # para evitar consumo excessivo de memória durante o build.
 ENV NATIVE_FULL_AOT_JOBS=8
 ENV TERM=xterm-256color
+ENV COLORTERM=truecolor
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 # Instala o Doom Emacs
 RUN ~/.config/emacs/bin/doom install --force --fonts --install --aot
