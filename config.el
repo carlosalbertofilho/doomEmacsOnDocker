@@ -135,6 +135,8 @@ Convenções 42 para C:
 - Usa TABs literais (não espaços)
 - Indentação de 4 espaços
 - TAB insere TAB literal no meio da linha, indenta no início
+- TAB entre tipo de retorno e nome da função
+- Chaves: abertura na mesma linha, fechamento em linha própria
 - Limite de 80 colunas"
   (setq indent-tabs-mode t          ; Usa TABs em vez de espaços
         c-basic-offset 4            ; Indentação básica de 4
@@ -142,10 +144,24 @@ Convenções 42 para C:
         c-syntactic-indentation t   ; Indentação sintática habilitada
         fill-column 80)             ; Limite de 80 colunas
   
+  ;; Estilo de chaves 42 (K&R modificado)
+  ;; Chave de abertura na mesma linha da função
+  (c-set-style "k&r")
+  (c-set-offset 'substatement-open 0)
+  (c-set-offset 'statement-cont 0)
+  (c-set-offset 'brace-list-open 0)
+  (c-set-offset 'defun-open 0)
+  (c-set-offset 'defun-close 0)
+  (c-set-offset 'inline-open 0)
+  
+  ;; Comportamento da tecla TAB: sempre insere TAB literal
+  (local-set-key (kbd "TAB") 'self-insert-command)
+  
   ;; Visualização de TABs e espaços em branco
-  (setq whitespace-style '(face tabs tab-mark trailing))
+  (setq whitespace-style '(face tabs tab-mark trailing spaces space-mark))
   (setq whitespace-display-mappings
-        '((tab-mark ?\t [?» ?\t] [?\\ ?\t])))  ; Mostra TAB como »
+        '((tab-mark ?\t [?» ?\t] [?\\ ?\t])      ; Mostra TAB como »
+          (space-mark ?\  [?·] [?\.])))           ; Mostra espaço como ·
   (whitespace-mode 1))
 
 ;; Aplica automaticamente ao entrar em c-mode
