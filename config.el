@@ -172,6 +172,12 @@ Convenções 42 para C:
   ;; Comportamento da tecla TAB: sempre insere TAB literal
   (local-set-key (kbd "TAB") 'self-insert-command)
   
+  ;; Linha vertical na coluna 80 (equivalente a colorcolumn=80 do Vim)
+  (display-fill-column-indicator-mode 1)
+  
+  ;; Indentação automática (equivalente a autoindent/smartindent do Vim)
+  (electric-indent-mode 1)
+  
   ;; Visualização de TABs e espaços em branco
   (setq whitespace-style '(face tabs tab-mark trailing spaces space-mark))
   (setq whitespace-display-mappings
