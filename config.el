@@ -126,6 +126,32 @@
   (setq flycheck-mode-line-prefix "✓"))
 
 ;; =============================================================================
+;; C-MODE CONFIGURATION - 42 CODING STYLE
+;; =============================================================================
+
+(defun my-c-mode-42-style ()
+  "Configure C mode according to 42 School standards.
+Convenções 42 para C:
+- Usa TABs literais (não espaços)
+- Indentação de 4 espaços
+- TAB insere TAB literal no meio da linha, indenta no início
+- Limite de 80 colunas"
+  (setq indent-tabs-mode t          ; Usa TABs em vez de espaços
+        c-basic-offset 4            ; Indentação básica de 4
+        tab-width 4                 ; Largura do TAB é 4
+        c-syntactic-indentation t   ; Indentação sintática habilitada
+        fill-column 80)             ; Limite de 80 colunas
+  
+  ;; Visualização de TABs e espaços em branco
+  (setq whitespace-style '(face tabs tab-mark trailing))
+  (setq whitespace-display-mappings
+        '((tab-mark ?\t [?» ?\t] [?\\ ?\t])))  ; Mostra TAB como »
+  (whitespace-mode 1))
+
+;; Aplica automaticamente ao entrar em c-mode
+(add-hook 'c-mode-hook #'my-c-mode-42-style)
+
+;; =============================================================================
 ;; ESHELL CONFIGURATION
 ;; =============================================================================
 
