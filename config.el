@@ -144,15 +144,30 @@ Convenções 42 para C:
         c-syntactic-indentation t   ; Indentação sintática habilitada
         fill-column 80)             ; Limite de 80 colunas
   
-  ;; Estilo de chaves 42 (K&R modificado)
-  ;; Chave de abertura na mesma linha da função
-  (c-set-style "k&r")
-  (c-set-offset 'substatement-open 0)
-  (c-set-offset 'statement-cont 0)
-  (c-set-offset 'brace-list-open 0)
-  (c-set-offset 'defun-open 0)
-  (c-set-offset 'defun-close 0)
-  (c-set-offset 'inline-open 0)
+  ;; Estilo de chaves 42: abertura na mesma linha, fechamento em linha própria
+  (c-add-style "42"
+               '("bsd"
+                 (c-basic-offset . 4)
+                 (c-offsets-alist
+                  (defun-open . 0)           ; { após declaração de função
+                  (defun-close . 0)          ; } alinhado com início da função
+                  (defun-block-intro . +)    ; corpo da função indentado
+                  (class-open . 0)
+                  (class-close . 0)
+                  (inline-open . 0)
+                  (inline-close . 0)
+                  (block-open . 0)
+                  (block-close . 0)
+                  (brace-list-open . 0)
+                  (brace-list-close . 0)
+                  (brace-list-intro . +)
+                  (statement-block-intro . +)
+                  (substatement-open . 0)
+                  (substatement . +)
+                  (case-label . 0)
+                  (statement-case-intro . +)
+                  (statement-cont . +))))
+  (c-set-style "42")
   
   ;; Comportamento da tecla TAB: sempre insere TAB literal
   (local-set-key (kbd "TAB") 'self-insert-command)
