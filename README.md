@@ -79,6 +79,10 @@ Este comando cria uma imagem local chamada `emacs-dev`.
 Para iniciar o Emacs, você precisa executar o contêiner, montando os diretórios de trabalho que deseja acessar.
 
 ```bash
+# Export envs
+export OPENAI_API_KEY="DIGITE_SUA_API_KEY"
+export FT_LOGIN="SE_LOGIN_42"
+
 # Com docker
 docker run -it --rm \
   --hostname emacs42 \
@@ -87,6 +91,9 @@ docker run -it --rm \
   -v "$HOME/Projects:/home/dev/Projects:z" \
   -v "$HOME/.ssh:/home/dev/.ssh:ro,z" \
   -v "$HOME/.gitconfig:/home/dev/.gitconfig:ro,z" \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY"\
+  -e FT_LOGIN="$FT_LOGIN" \
+  --userns=keep-id \
   emacs-dev /usr/bin/zsh
 
 # Com podman
@@ -97,6 +104,9 @@ podman run -it --rm \
   -v "$HOME/Projects:/home/dev/Projects:z" \
   -v "$HOME/.ssh:/home/dev/.ssh:ro,z" \
   -v "$HOME/.gitconfig:/home/dev/.gitconfig:ro,z" \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY"\
+  -e FT_LOGIN="$FT_LOGIN" \
+  --userns=keep-id \
   emacs-dev /usr/bin/zsh
 ```
 
