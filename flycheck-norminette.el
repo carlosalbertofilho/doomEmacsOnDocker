@@ -127,7 +127,7 @@ See URL `https://github.com/42School/norminette' for more information."
   "A C header syntax checker using 42 School's Norminette.
 
 Checks C header files for compliance with 42 coding standards."
-  :command ("norminette" source-inplace)
+  :command ("norminette -R CheckDefine" source-inplace)
   :error-patterns
   ((error line-start
           "Error: " (id (one-or-more (not (any space))))
