@@ -24,16 +24,16 @@
 ;; Nerd Fonts options installed in the container:
 
 ;; Fira Code (default - excellent ligatures support)
-(setq doom-font (font-spec :family "FiraCode Nerd Font" :size 12 :weight 'semi-light)
-      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
+;;(setq doom-font (font-spec :family "FiraCode Nerd Font" :size 12 :weight 'semi-light)
+;;      doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
 
 ;; JetBrains Mono (very popular, excellent readability)
 ;; (setq doom-font (font-spec :family "JetBrainsMono Nerd Font" :size 12 :weight 'normal)
 ;;       doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
 
 ;; Iosevka (narrow, great for maximizing horizontal space)
-;; (setq doom-font (font-spec :family "Iosevka Nerd Font" :size 12 :weight 'normal)
-;;       doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
+(setq doom-font (font-spec :family "Iosevka Nerd Font" :size 12 :weight 'normal)
+       doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
 
 ;; Source Code Pro (Adobe's classic, highly readable)
 ;; (setq doom-font (font-spec :family "SauceCodePro Nerd Font" :size 12 :weight 'normal)
@@ -48,7 +48,7 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-dracula)
+(setq doom-theme 'doom-Iosvkem)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -193,29 +193,33 @@ Convenções 42 para C:
 ;; =============================================================================
 
 (after! eshell
-  ;; ------------------------------
+  ;; -------------------------
   ;; ALIASES for 42 projects (C)
-  ;; ------------------------------
-  
-  ;; Compile with 42 standard flags
-  (eshell/alias "cc42" "cc -Wall -Wextra -Werror $* -o a.out")
-  
-  ;; Run program
-  (eshell/alias "r42" "./a.out")
-  
-  ;; Clean binary
-  (eshell/alias "clean42" "rm -f a.out")
-  
-  ;; Compile and run directly
-  (eshell/alias "cr42" "cc42 $* && ./a.out")
-  
-  ;; Compile with valgrind
-  (eshell/alias "val42" "cc42 $* && valgrind --leak-check=full ./a.out")
-  
-  ;; Norminette check (installed via pipx)
-  (when (executable-find "norminette")
-    (eshell/alias "n42" "norminette $*")))
+  ;; -------------------------
 
+  ;; Compile with 42 standard flags
+  (add-hook 'eshell-mode-hook
+    (lambda ()
+    (eshell/alias "cc42" "cc -Wall -Wextra -Werror $* -o a.out")
+
+    ;; Run program
+    (eshell/alias "r42" "./a.out")
+
+    ;; Clean binary
+    (eshell/alias "clean42" "rm -f a.out")
+
+    ;; Compile and run directly
+    (eshell/alias "cr42" "cc42 $* && ./a.out")
+
+    ;; Compile with valgrind
+    (eshell/alias "val42" "cc42 $* && valgrind --leak-check=full ./a.out")
+
+    ;; Norminette check (installed via pipx)
+    (when (executable-find "norminette")
+    (eshell/alias "n42" "norminette $*"))
+    )
+  )
+)
 ;; =============================================================================
 ;; AI ASSISTANTS - ELLAMA
 ;; =============================================================================
