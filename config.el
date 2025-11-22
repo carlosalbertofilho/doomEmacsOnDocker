@@ -124,11 +124,6 @@
   
   ;; Show error count in modeline
   (setq flycheck-mode-line-prefix "✓")
-
-  ;; Add Clang check after norminetter is ok
-  (with-eval-after-load 'flycheck
-    (flycheck-add-next-checker 'c-norminette '(warning . c/c++-clang))))
-
 ;; =============================================================================
 ;; C-MODE CONFIGURATION - 42 CODING STYLE
 ;; =============================================================================
