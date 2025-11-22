@@ -116,7 +116,8 @@ See URL `https://github.com/42School/norminette' for more information."
   :predicate
   (lambda ()
     (and buffer-file-name
-         (string-match-p "\\.c\\'" buffer-file-name)
+         (or (string-match-p "\\.c\\'" buffer-file-name)
+             (string-match-p "\\.h\\'" buffer-file-name))
          (executable-find flycheck-norminette-executable))))
 
 ;; =============================================================================
