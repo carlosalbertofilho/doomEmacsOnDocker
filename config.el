@@ -123,7 +123,7 @@
   (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
   
   ;; Show error count in modeline
-  (setq flycheck-mode-line-prefix "✓")
+  (setq flycheck-mode-line-prefix "✓"))
 ;; =============================================================================
 ;; C-MODE CONFIGURATION - 42 CODING STYLE
 ;; =============================================================================
