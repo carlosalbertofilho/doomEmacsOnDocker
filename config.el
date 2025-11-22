@@ -124,6 +124,51 @@
   
   ;; Show error count in modeline
   (setq flycheck-mode-line-prefix "✓"))
+
+;; =============================================================================
+;; CORFU MODE - AUTOCOMPLETION
+;; =============================================================================
+
+(after! corfu
+  ;; Ativa autocompletar automático enquanto digita
+  (setq corfu-auto t)                    ; Habilita auto-popup
+  (setq corfu-auto-delay 0.2)            ; Delay em segundos (0.2 = 200ms)
+  (setq corfu-auto-prefix 2)             ; Mínimo de caracteres para iniciar
+
+  ;; Comportamento do popup
+  (setq corfu-cycle t)                   ; Permite navegar circularmente
+  (setq corfu-preselect 'prompt)         ; Comportamento de pré-seleção
+  (setq corfu-quit-no-match 'separator)  ; Quando sair sem match
+  (setq corfu-quit-at-boundary t)        ; Sair ao alcançar limite de palavra
+
+  ;; Visual
+  (setq corfu-count 10)                  ; Número de candidatos visíveis
+  (setq corfu-max-width 80)              ; Largura máxima do popup
+  (setq corfu-min-width 20)              ; Largura mínima do popup
+
+  ;; Ordenação com orderless (já configurado no seu init.el)
+  (setq corfu-sort-override-function nil)
+
+  ;; Keybindings customizados
+  (map! :map corfu-map
+        "C-n" #'corfu-next           ; Ctrl-n: próxima sugestão
+        "C-p" #'corfu-previous       ; Ctrl-p: sugestão anterior
+        "C-d" #'corfu-show-documentation  ; Ctrl-d: documentação
+        "<tab>" #'corfu-complete     ; Tab: confirma seleção
+        "TAB" #'corfu-complete
+        "RET" nil                    ; Enter: não confirma automaticamente
+        "<return>" nil))
+
+;; =============================================================================
+;; CAPE - Completion At Point Extensions (para Corfu)
+;; =============================================================================
+
+(after! cape
+  ;; Adiciona backends de completion
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)  ; Palavras do buffer
+  (add-to-list 'completion-at-point-functions #'cape-file)     ; Arquivos
+  (add-to-list 'completion-at-point-functions #'cape-keyword)) ; Keywords
+
 ;; =============================================================================
 ;; C-MODE CONFIGURATION - 42 CODING STYLE
 ;; =============================================================================
@@ -219,6 +264,7 @@ Convenções 42 para C:
     )
   )
 )
+
 ;; =============================================================================
 ;; AI ASSISTANTS - ELLAMA
 ;; =============================================================================
@@ -241,7 +287,7 @@ Convenções 42 para C:
     (setq ellama-provider
           (make-llm-openai
            :key (getenv "OPENAI_API_KEY")
-           :chat-model "gpt-4")))
+           :chat-model "gpt-5.1")))
   
   ;; Alternative providers configuration
   ;; Uncomment and configure the one you want to use:
@@ -300,7 +346,7 @@ Convenções 42 para C:
            (setq ellama-provider
                  (make-llm-openai
                   :key (getenv "OPENAI_API_KEY")
-                  :chat-model "gpt-3.5-turbo"))
+                  :chat-model "gpt-4o"))
            (message "Switched to OpenAI GPT-3.5 Turbo"))
        (user-error "OPENAI_API_KEY environment variable not set")))
     ('gemini
