@@ -48,7 +48,7 @@
 
 Checks C source files for compliance with 42 coding standards.
 See URL `https://github.com/42School/norminette' for more information."
-  :command ("norminette" source-inplace)
+  :command ("norminette" "-R" "CheckDefine" source-inplace)
   :error-patterns
   ((error line-start
           "Error: " (id (one-or-more (not (any space))))
@@ -120,73 +120,6 @@ See URL `https://github.com/42School/norminette' for more information."
          (executable-find flycheck-norminette-executable))))
 
 ;; =============================================================================
-;; HEADER FILE CHECKER
-;; =============================================================================
-
-(flycheck-define-checker h-norminette
-  "A C header syntax checker using 42 School's Norminette.
-
-Checks C header files for compliance with 42 coding standards."
-  :command ("norminette" "-R" "CheckDefine" source-inplace)
-  :error-patterns
-  ((error line-start
-          "Error: " (id (one-or-more (not (any space))))
-          (one-or-more space)
-          "(line:" (zero-or-more space) line "," (zero-or-more space)
-          "col:" (zero-or-more space) column "):"
-          (zero-or-more space)
-          (message (one-or-more not-newline))
-          line-end)
-   (error line-start
-          (file-name) ": Error!" line-end)
-   (warning line-start
-            "Notice: " (id (one-or-more (not (any space))))
-            (one-or-more space)
-            "(line:" (zero-or-more space) line "," (zero-or-more space)
-            "col:" (zero-or-more space) column "):"
-            (zero-or-more space)
-            (message (one-or-more not-newline))
-            line-end))
-  :error-filter
-  (lambda (errors)
-    (dolist (err errors)
-      (let ((msg (flycheck-error-message err)))
-        (when msg
-          ;; Remove ANSI color codes (e.g., [0m, [95m, etc.)
-          (setq msg (replace-regexp-in-string "\033\\[\\([0-9;]*\\)m" "" msg))
-          ;; Remove other ANSI escape sequences
-          (setq msg (replace-regexp-in-string "\\[\\([0-9;]*\\)m" "" msg))
-          ;; Remove asterisks used for highlighting (*!text*!)
-          (setq msg (replace-regexp-in-string "\\*!\\([^*]*\\)\\*!" "\\1" msg))
-          ;; Clean up extra spaces
-          (setq msg (replace-regexp-in-string "  +" " " msg))
-          (setq msg (string-trim msg))
-          
-          ;; Update the message
-          (setf (flycheck-error-message err) msg)
-          
-          ;; Add context to common errors
-          (cond
-           ((string-match "INVALID_HEADER" msg)
-            (setf (flycheck-error-message err)
-                  (concat msg " (Use SPC c h to insert/update header)")))
-           ((string-match "MULT_DECL" msg)
-            (setf (flycheck-error-message err)
-                  (concat msg " (One declaration per line)")))))))
-    (seq-filter
-     (lambda (err)
-       (not (and (eq 'info (flycheck-error-level err))
-                 (string-match "No norminette errors found"
-                              (flycheck-error-message err)))))
-     errors))
-  :modes (c-mode)
-  :predicate
-  (lambda ()
-    (and buffer-file-name
-         (string-match-p "\\.h\\'" buffer-file-name)
-         (executable-find flycheck-norminette-executable))))
-
-;; =============================================================================
 ;; SETUP FUNCTION
 ;; =============================================================================
 
@@ -198,10 +131,8 @@ Adds norminette checkers to Flycheck and configures them for C files."
   (interactive)
   ;; Add our checkers to Flycheck
   (add-to-list 'flycheck-checkers 'c-norminette)
-  (add-to-list 'flycheck-checkers 'h-norminette)
-  
+
   ;; Set norminette as the preferred checker for C files
-  (flycheck-add-next-checker 'c/c++-gcc 'c-norminette)
   (flycheck-add-next-checker 'c/c++-clang 'c-norminette)
   
   ;; Configure flycheck for better norminette experience
