@@ -48,7 +48,7 @@
 
 Checks C source files for compliance with 42 coding standards.
 See URL `https://github.com/42School/norminette' for more information."
-  :command ("norminette" "-R" "CheckDefine" source-inplace)
+  :command ("norminette" source)
   :error-patterns
   ((error line-start
           "Error: " (id (one-or-more (not (any space))))
