@@ -169,67 +169,72 @@
   (add-to-list 'completion-at-point-functions #'cape-file)     ; Arquivos
   (add-to-list 'completion-at-point-functions #'cape-keyword)) ; Keywords
 
-;; =============================================================================
-;; C-MODE CONFIGURATION - 42 CODING STYLE
-;; =============================================================================
+;; ---------------------------------------------------------------------------
+;; Estilo de indentação 42 (inspirado em BSD, ajustado pra Norminette)
+;; ---------------------------------------------------------------------------
+(c-add-style
+ "42"
+ '("bsd"
+   (c-basic-offset . 4)
+   (indent-tabs-mode . t)
+   (c-tab-always-indent . t)
+   (c-offsets-alist
+    (defun-open . 0)
+    (defun-close . 0)
+    (defun-block-intro . +)
+    (brace-list-open . 0)
+    (brace-list-close . 0)
+    (brace-list-intro . +)
+    (block-open . 0)
+    (block-close . 0)
+    (statement-block-intro . +)
+    (substatement-open . 0)
+    (substatement . +)
+    (case-label . 0)
+    (statement-case-intro . +)
+    (statement-cont . +))))
 
+;; ---------------------------------------------------------------------------
+;; TAB inteligente para o padrão da 42
+;; ---------------------------------------------------------------------------
+(defun my-c-tab-42 ()
+  "Se o cursor estiver no início da linha → indenta.
+Se estiver no meio da linha → insere TAB literal."
+  (interactive)
+  (if (and (bolp) (looking-at "[ \t]*$"))
+      (c-indent-line-or-region)
+    (insert-tab)))
+
+;; ---------------------------------------------------------------------------
+;; Configuração final do estilo 42 para C-mode
+;; ---------------------------------------------------------------------------
 (defun my-c-mode-42-style ()
-  "Configure C mode according to 42 School standards.
-Convenções 42 para C:
-- Usa TABs literais (não espaços)
-- Indentação de 4 espaços
-- TAB insere TAB literal no meio da linha, indenta no início
-- TAB entre tipo de retorno e nome da função
-- Chaves: abertura na mesma linha, fechamento em linha própria
-- Limite de 80 colunas"
-  (setq indent-tabs-mode t          ; Usa TABs em vez de espaços
-        c-basic-offset 4            ; Indentação básica de 4
-        tab-width 4                 ; Largura do TAB é 4
-        c-syntactic-indentation t   ; Indentação sintática habilitada
-        fill-column 80)             ; Limite de 80 colunas
-  
-  ;; Estilo de chaves 42: abertura na mesma linha, fechamento em linha própria
-  (c-add-style "42"
-               '("bsd"
-                 (c-basic-offset . 4)
-                 (c-offsets-alist
-                  (defun-open . 0)           ; { após declaração de função
-                  (defun-close . 0)          ; } alinhado com início da função
-                  (defun-block-intro . +)    ; corpo da função indentado
-                  (class-open . 0)
-                  (class-close . 0)
-                  (inline-open . 0)
-                  (inline-close . 0)
-                  (block-open . 0)
-                  (block-close . 0)
-                  (brace-list-open . 0)
-                  (brace-list-close . 0)
-                  (brace-list-intro . +)
-                  (statement-block-intro . +)
-                  (substatement-open . 0)
-                  (substatement . +)
-                  (case-label . 0)
-                  (statement-case-intro . +)
-                  (statement-cont . +))))
+  "Configura o estilo C da 42 (Norminette friendly)."
+  (setq indent-tabs-mode t        ;; usa tabs reais
+        c-basic-offset 4          ;; indentação de 4
+        tab-width 4               ;; tab = 4 colunas
+        fill-column 80)           ;; limite de 80 colunas
+
+  ;; aplica estilo 42
   (c-set-style "42")
-  
-  ;; Comportamento da tecla TAB: sempre insere TAB literal
-  (local-set-key (kbd "TAB") 'self-insert-command)
-  
-  ;; Linha vertical na coluna 80 (equivalente a colorcolumn=80 do Vim)
+
+  ;; TAB inteligente
+  (local-set-key (kbd "TAB") #'my-c-tab-42)
+
+  ;; coluna 80
   (display-fill-column-indicator-mode 1)
-  
-  ;; Indentação automática (equivalente a autoindent/smartindent do Vim)
+
+  ;; indentação automática
   (electric-indent-mode 1)
-  
-  ;; Visualização de TABs e espaços em branco
+
+  ;; visualização de whitespace (TAB → »)
   (setq whitespace-style '(face tabs tab-mark trailing spaces space-mark))
   (setq whitespace-display-mappings
-        '((tab-mark ?\t [?» ?\t] [?\\ ?\t])      ; Mostra TAB como »
-          (space-mark ?\  [?·] [?\.])))           ; Mostra espaço como ·
+        '((tab-mark ?\t [?» ?\t] [?\\ ?\t])
+          (space-mark ?\  [?·]   [?\.])))
   (whitespace-mode 1))
 
-;; Aplica automaticamente ao entrar em c-mode
+;; ativa automaticamente no C-mode
 (add-hook 'c-mode-hook #'my-c-mode-42-style)
 
 ;; =============================================================================
@@ -269,14 +274,25 @@ Convenções 42 para C:
 ;; EGLOT CONFIGURATION - LSP for C with 42 Style
 ;; =============================================================================
 (after! eglot
-   (defun my-c-mode-eglot-disable-formatting()
-     "Desabilita formatação para não conflitar com 42 style"
-     (setq-local eglot-ignored-server-capabilities '(:documentFormattingProvider
-                                                     :documentRangeFormattingProvider
-                                                     :documentOnTypeFormattingProvider)))
-   ;; aplica ao c hook
-   (add-hook 'c-mode-hook #'my-c-mode-eglot-disable-formatting)
-)
+  (add-to-list 'eglot-server-programs
+               '(c-mode . ("clangd" "--background-index" "--clang-tidy"
+                                   "--completion-style=detailed"
+                                   "--header-insertion=iwyu"
+                                   "--pch-storage=memory")))
+
+  (defun my-c-mode-eglot-setup ()
+    "Disable Eglot's formatting and indentation capabilities for C-mode."
+    ;; Don't let eglot manage indentation, let c-mode handle it.
+    (setq-local eglot-stay-out-of 'indentation)
+    
+    ;; Disable LSP formatting capabilities to prevent conflicts with 42 style.
+    (setq-local eglot-ignored-server-capabilities
+                '(:documentFormattingProvider
+                  :documentRangeFormattingProvider
+                  :documentOnTypeFormattingProvider)))
+
+  ;; Apply the setup when c-mode starts.
+  (add-hook 'c-mode-hook #'my-c-mode-eglot-setup))
 
 ;; =============================================================================
 ;; AI ASSISTANTS - ELLAMA
@@ -373,3 +389,13 @@ Convenções 42 para C:
            (message "Switched to Google Gemini Pro"))
        (user-error "GEMINI_API_KEY environment variable not set")))
     (_ (user-error "Unknown provider"))))
+
+
+;; =============================================================================
+;; TREE-SITTER CONFIGURATION
+;; =============================================================================
+;; Define a fonte das gramáticas para C e C++ para garantir que o tree-sitter
+;; saiba de onde baixá-las e compilá-las.
+(setq treesit-language-source-alist
+'((cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+(c "https://github.com/tree-sitter/tree-sitter-c")))
