@@ -266,6 +266,19 @@ Convenções 42 para C:
 )
 
 ;; =============================================================================
+;; EGLOT CONFIGURATION - LSP for C with 42 Style
+;; =============================================================================
+(after! eglot
+   (defun my-c-mode-eglot-disable-formatting()
+     "Desabilita formatação para não conflitar com 42 style"
+     (setq-local eglot-ignored-server-capabilities '(:documentFormattingProvider
+                                                     :documentRangeFormattingProvider
+                                                     :documentOnTypeFormattingProvider)))
+   ;; aplica ao c hook
+   (add-hook 'c-mode-hook #'my-c-mode-eglot-disable-formatting)
+)
+
+;; =============================================================================
 ;; AI ASSISTANTS - ELLAMA
 ;; =============================================================================
 
