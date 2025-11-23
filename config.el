@@ -391,11 +391,3 @@ Se estiver no meio da linha → insere TAB literal."
     (_ (user-error "Unknown provider"))))
 
 
-;; =============================================================================
-;; TREE-SITTER CONFIGURATION
-;; =============================================================================
-;; Define a fonte das gramáticas para C e C++ para garantir que o tree-sitter
-;; saiba de onde baixá-las e compilá-las.
-(setq treesit-language-source-alist
-'((cpp "https://github.com/tree-sitter/tree-sitter-cpp")
-(c "https://github.com/tree-sitter/tree-sitter-c")))
