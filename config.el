@@ -304,6 +304,7 @@ Se estiver no meio da linha → insere TAB literal."
   ;; General settings
   (setq ellama-language "English")
   (setq ellama-sessions-directory (expand-file-name "ellama-sessions" doom-cache-dir))
+  (setq warning-suppress-types '(llm))
   
   :config
   ;; Load LLM backends after ellama is loaded
@@ -338,18 +339,29 @@ Se estiver no meio da linha → insere TAB literal."
   
   ;; Keybindings - Using SPC A (uppercase) to avoid conflicts with embark
   (map! :leader
+        ;; Prefix A - AI Assistant (ações gerais)
         (:prefix ("A" . "AI Assistant")
          :desc "Ask about selection" "a" #'ellama-ask-about
-         :desc "Chat" "c" #'ellama-chat
-         :desc "Define word" "d" #'ellama-define-word
-         :desc "Summarize" "s" #'ellama-summarize
-         :desc "Code review" "r" #'ellama-code-review
-         :desc "Improve code" "i" #'ellama-code-improve
-         :desc "Complete code" "C" #'ellama-code-complete
-         :desc "Add code" "A" #'ellama-code-add
-         :desc "Translate" "t" #'ellama-translate
-         :desc "Session" "S" #'ellama-session
-         :desc "Switch provider" "p" #'my/ellama-switch-provider)))
+         :desc "Chat"                "c" #'ellama-chat
+         :desc "Define word"         "d" #'ellama-define-word
+         :desc "Summarize"           "s" #'ellama-summarize
+         :desc "Code review"         "r" #'ellama-code-review
+         :desc "Improve code"        "i" #'ellama-code-improve
+         :desc "Complete code"       "C" #'ellama-code-complete
+         :desc "Add code"            "A" #'ellama-code-add
+         :desc "Translate"           "t" #'ellama-translate
+         :desc "Session"             "S" #'ellama-session
+         :desc "Switch provider"     "p" #'my/ellama-switch-provider
+
+         ;; Submenu X: contexto → SPC A X ...
+         (:prefix ("x" . "AI Context")
+          :desc "Add region to context"    "a" #'ellama-context-add-region
+          :desc "Add buffer to context"    "b" #'ellama-context-add-buffer
+          :desc "Add file to context"      "f" #'ellama-context-add-file
+          :desc "Remove item from context" "r" #'ellama-context-remove
+          :desc "Clear all context"        "c" #'ellama-context-clear
+          :desc "Show current context"     "s" #'ellama-context-show)))
+  )
 
 ;; Helper function to switch between providers
 (defun my/ellama-switch-provider (provider)
