@@ -112,7 +112,7 @@ See URL `https://github.com/42School/norminette' for more information."
                  (string-match "No norminette errors found"
                               (flycheck-error-message err)))))
      errors))
-  :modes (c-mode)
+  :modes (c-mode c-ts-mode c++-mode c++-ts-mode)
   :predicate
   (lambda ()
     (and buffer-file-name
@@ -133,8 +133,12 @@ Adds norminette checkers to Flycheck and configures them for C files."
   ;; Add our checkers to Flycheck
   (add-to-list 'flycheck-checkers 'c-norminette)
 
+  ;; Associar o checker aos modos baseados em C (inclusive tree-sitter)
+  (flycheck-add-mode 'c-norminette 'c-mode)
+  (flycheck-add-mode 'c-norminette 'c-ts-mode)
   ;; Set norminette as the preferred checker for C files
   (flycheck-add-next-checker 'c/c++-clang 'c-norminette)
+  (flycheck-add-next-checker 'eglot-check 'c-norminette)
   
   ;; Configure flycheck for better norminette experience
   (setq-default

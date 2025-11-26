@@ -112,6 +112,7 @@
   
   ;; Auto-enable norminette checking for C files
   (add-hook 'c-mode-hook #'flycheck-norminette-auto-enable)
+  (add-hook 'c-ts-mode-hook #'flycheck-norminette-auto-enable)
   
   ;; Additional keybindings for norminette
   (map! :map c-mode-map
@@ -216,7 +217,8 @@ Se estiver no meio da linha → insere TAB literal."
         fill-column 80)           ;; limite de 80 colunas
 
   ;; aplica estilo 42
-  (c-set-style "42")
+  (when (derived-mode-p 'c-mode)
+    (c-set-style "42"))
 
   ;; TAB inteligente
   (local-set-key (kbd "TAB") #'my-c-tab-42)
@@ -236,6 +238,7 @@ Se estiver no meio da linha → insere TAB literal."
 
 ;; ativa automaticamente no C-mode
 (add-hook 'c-mode-hook #'my-c-mode-42-style)
+(add-hook 'c-ts-mode-hook #'my-c-mode-42-style)
 
 ;; =============================================================================
 ;; ESHELL CONFIGURATION
@@ -280,19 +283,47 @@ Se estiver no meio da linha → insere TAB literal."
                                    "--header-insertion=iwyu"
                                    "--pch-storage=memory")))
 
-  (defun my-c-mode-eglot-setup ()
-    "Disable Eglot's formatting and indentation capabilities for C-mode."
-    ;; Don't let eglot manage indentation, let c-mode handle it.
-    (setq-local eglot-stay-out-of 'indentation)
-    
-    ;; Disable LSP formatting capabilities to prevent conflicts with 42 style.
+  (defun my-c-c++-eglot-setup ()
+    "Configuração Eglot para C/C++ compatível com estilo 42."
+    ;; Não deixar o LSP mexer em indentação/formatting
+    (setq-local eglot-stay-out-of '(indentation))
     (setq-local eglot-ignored-server-capabilities
                 '(:documentFormattingProvider
                   :documentRangeFormattingProvider
-                  :documentOnTypeFormattingProvider)))
+                  :documentOnTypeFormattingProvider))
 
+    ;; Ativar features úteis de navegação
+    (eldoc-mode 1)             ; doc na minibuffer
+    (flymake-mode 1)           ; diagnostics do clangd
+    (company-mode -1)          ; evitar conflito se por acaso company estiver
+    ;; (você já usa corfu/cape)
+
+    ;; Atalhos locais sob leader para coisas comuns do Eglot
+    (map! :localleader
+          :map (c-mode-map c-ts-mode-map c++-mode-map c++-ts-mode-map)
+          "e" #'eglot          ; (re)conectar servidor
+          "r" #'eglot-rename
+          "a" #'eglot-code-actions
+          "f" #'eglot-format   ; se quiser formatar trecho manualmente
+          "h" #'eldoc-doc-buffer
+          "i" #'eglot-find-implementation
+          "d" #'eglot-find-declaration
+          "t" #'eglot-find-typeDefinition))
+
+  ;; Auto complete do eglot primeiro
+  (add-hook 'eglot-managed-mode-hook
+            (lambda ()
+              ;;Garante que o backend de completion do eglot esteja em primeiro
+              (setq-local completion-at-point-functions
+                          (cons #'eglot-completion-at-point
+                                (remove #'eglot-completion-at-point
+                                        completion-at-point-functions)))))
   ;; Apply the setup when c-mode starts.
-  (add-hook 'c-mode-hook #'my-c-mode-eglot-setup))
+  (add-hook 'c-mode-hook #'my-c-mode-eglot-setup)
+  (add-hook 'c-ts-mode-hook #'my-c-mode-eglot-setup)
+  (add-hook 'c++-mode-hook #'my-c-mode-eglot-setup)
+  (add-hook 'c++-ts-mode-hook #'my-c-mode-eglot-setup)
+)
 
 ;; =============================================================================
 ;; AI ASSISTANTS - ELLAMA
