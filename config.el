@@ -32,8 +32,8 @@
 ;;       doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
 
 ;; Iosevka (narrow, great for maximizing horizontal space)
-(setq doom-font (font-spec :family "Iosevka Nerd Font" :size 12 :weight 'normal)
-       doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13))
+(setq doom-font (font-spec :family "Iosevka Nerd Font" :size 14 :weight 'normal)
+       doom-variable-pitch-font (font-spec :family "Fira Sans" :size 15))
 
 ;; Source Code Pro (Adobe's classic, highly readable)
 ;; (setq doom-font (font-spec :family "SauceCodePro Nerd Font" :size 12 :weight 'normal)
@@ -61,6 +61,8 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
+;; suprime os warnings do ellama
+(setq warning-suppress-types '(llm))
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
@@ -301,6 +303,9 @@ Se estiver no meio da linha → insere TAB literal."
     (eldoc-mode 1)             ; doc na minibuffer
     (flymake-mode 1)           ; diagnostics do clangd
     (company-mode -1)          ; evitar conflito se por acaso company estiver
+
+  (when (eq major-mode 'c-ts-mode)
+    (flycheck-add-next-checker 'eglot-check 'c-norminette 'append))
     ;; (você já usa corfu/cape)
 
     ;; Atalhos locais sob leader para coisas comuns do Eglot
@@ -340,10 +345,10 @@ Se estiver no meio da linha → insere TAB literal."
   ;; General settings
   (setq ellama-language "English")
   (setq ellama-sessions-directory (expand-file-name "ellama-sessions" doom-cache-dir))
-  (setq warning-suppress-types '(llm))
-  
+
   :config
   ;; Load LLM backends after ellama is loaded
+  (require 'llm-gemini nil t)
   (require 'llm-openai nil t)
   
   ;; Default provider: OpenAI GPT-4
@@ -359,20 +364,13 @@ Se estiver no meio da linha → insere TAB literal."
   ;; Uncomment and configure the one you want to use:
   
   ;; Google Gemini
-  ;; (when (getenv "GEMINI_API_KEY")
-  ;;   (require 'llm-gemini)
-  ;;   (setq ellama-provider
-  ;;         (make-llm-gemini
-  ;;          :key (getenv "GEMINI_API_KEY")
-  ;;          :chat-model "gemini-pro")))
-  
-  ;; OpenAI GPT-3.5 (faster, cheaper alternative)
-  ;; (when (getenv "OPENAI_API_KEY")
-  ;;   (setq ellama-provider
-  ;;         (make-llm-openai
-  ;;          :key (getenv "OPENAI_API_KEY")
-  ;;          :chat-model "gpt-3.5-turbo")))
-  
+  (when (getenv "GEMINI_API_KEY")
+    (require 'llm-gemini)
+    (setq ellama-provider
+          (make-llm-gemini
+           :key (getenv "GEMINI_API_KEY")
+           :chat-model "gemini-2.5-pro")))
+
   ;; Keybindings - Using SPC A (uppercase) to avoid conflicts with embark
   (map! :leader
         ;; Prefix A - AI Assistant (ações gerais)

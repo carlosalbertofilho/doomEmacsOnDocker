@@ -136,8 +136,7 @@ Adds norminette checkers to Flycheck and configures them for C files."
   (flycheck-add-mode 'c-norminette 'c-ts-mode)
   ;; Set norminette as the preferred checker for C files
   (flycheck-add-next-checker 'c/c++-clang 'c-norminette)
-  (flycheck-add-next-checker 'eglot-check 'c-norminette)
-  
+
   ;; Configure flycheck for better norminette experience
   (setq-default
    ;; Show errors immediately
