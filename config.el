@@ -209,19 +209,30 @@ Se estiver no meio da linha → insere TAB literal."
 ;; ---------------------------------------------------------------------------
 ;; Configuração final do estilo 42 para C-mode
 ;; ---------------------------------------------------------------------------
-(defun my-c-mode-42-style ()
+(defun my-c-42-style ()
   "Configura o estilo C da 42 (Norminette friendly)."
   (setq indent-tabs-mode t        ;; usa tabs reais
-        c-basic-offset 4          ;; indentação de 4
         tab-width 4               ;; tab = 4 colunas
         fill-column 80)           ;; limite de 80 colunas
 
-  ;; aplica estilo 42
-  (when (derived-mode-p 'c-mode)
-    (c-set-style "42"))
+  ;; Para CC Mode (c-mode, c++-mode, etc) podemos usar c-set-style
+  (when (eq major-mode 'c-mode)
+    (setq c-basic-offset 4)
+    (c-set-style "42")
+    ;; TAB inteligente só faz sentido aqui, porque usa c-indent-line-or-region
+    (local-set-key (kbd "TAB") #'my-c-tab-42))
 
-  ;; TAB inteligente
-  (local-set-key (kbd "TAB") #'my-c-tab-42)
+  ;; Para c-ts-mode, não existe c-set-style; só usamos variáveis básicas
+  (when (eq major-mode 'c-ts-mode)
+    ;; c-ts-mode ainda respeita c-basic-offset/tab-width em Emacs 29+
+    (setq-local c-basic-offset 4)
+    ;; Se quiser um TAB “42 friendly” parecido:
+    (local-set-key (kbd "TAB")
+                   (lambda ()
+                     (interactive)
+                     (if (and (bolp) (looking-at "[ \t]*$"))
+                         (indent-for-tab-command)
+                       (insert-tab)))))
 
   ;; coluna 80
   (display-fill-column-indicator-mode 1)
@@ -237,8 +248,8 @@ Se estiver no meio da linha → insere TAB literal."
   (whitespace-mode 1))
 
 ;; ativa automaticamente no C-mode
-(add-hook 'c-mode-hook #'my-c-mode-42-style)
-(add-hook 'c-ts-mode-hook #'my-c-mode-42-style)
+(add-hook 'c-mode-hook #'my-c-42-style)
+(add-hook 'c-ts-mode-hook #'my-c-42-style)
 
 ;; =============================================================================
 ;; ESHELL CONFIGURATION
@@ -286,7 +297,6 @@ Se estiver no meio da linha → insere TAB literal."
   (defun my-c-c++-eglot-setup ()
     "Configuração Eglot para C/C++ compatível com estilo 42."
     ;; Não deixar o LSP mexer em indentação/formatting
-    (setq-local eglot-stay-out-of '(indentation))
     (setq-local eglot-ignored-server-capabilities
                 '(:documentFormattingProvider
                   :documentRangeFormattingProvider
