@@ -227,12 +227,7 @@ Se estiver no meio da linha → insere TAB literal."
     ;; c-ts-mode ainda respeita c-basic-offset/tab-width em Emacs 29+
     (setq-local c-basic-offset 4)
     ;; Se quiser um TAB “42 friendly” parecido:
-    (local-set-key (kbd "TAB")
-                   (lambda ()
-                     (interactive)
-                     (if (and (bolp) (looking-at "[ \t]*$"))
-                         (indent-for-tab-command)
-                       (insert-tab)))))
+    (local-set-key (kbd "TAB") #'insert-tab))
 
   ;; coluna 80
   (display-fill-column-indicator-mode 1)
