@@ -304,8 +304,7 @@ Se estiver no meio da linha → insere TAB literal."
     (flymake-mode 1)           ; diagnostics do clangd
     (company-mode -1)          ; evitar conflito se por acaso company estiver
 
-  (when (eq major-mode 'c-ts-mode)
-    (flycheck-add-next-checker 'eglot-check 'c-norminette 'append))
+    (flycheck-add-next-checker 'eglot-check 'c-norminette 'append)
     ;; (você já usa corfu/cape)
 
     ;; Atalhos locais sob leader para coisas comuns do Eglot
