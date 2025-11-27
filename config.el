@@ -96,38 +96,6 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-
-;; =============================================================================
-;; 42 SCHOOL CONFIGURATION
-;; =============================================================================
-
-;; Load and enable 42 header
-(load! "header42")
-(header-42-enable)
-
-;; Load and setup Flycheck Norminette integration
-(load! "flycheck-norminette")
-
-(after! flycheck
-  ;; Setup norminette checker
-  (flycheck-norminette-setup)
-  
-  ;; Auto-enable norminette checking for C files
-  (add-hook 'c-mode-hook #'flycheck-norminette-auto-enable)
-  (add-hook 'c-ts-mode-hook #'flycheck-norminette-auto-enable)
-  
-  ;; Additional keybindings for norminette
-  (map! :map c-mode-map
-        :localleader
-        :desc "Check with norminette" "n" #'flycheck-norminette-check-buffer
-        :desc "Toggle norminette" "N" #'flycheck-norminette-toggle)
-  
-  ;; Customize flycheck display for better readability
-  (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
-  
-  ;; Show error count in modeline
-  (setq flycheck-mode-line-prefix "✓"))
-
 ;; =============================================================================
 ;; CORFU MODE - AUTOCOMPLETION
 ;; =============================================================================
@@ -172,114 +140,104 @@
   (add-to-list 'completion-at-point-functions #'cape-file)     ; Arquivos
   (add-to-list 'completion-at-point-functions #'cape-keyword)) ; Keywords
 
-;; ---------------------------------------------------------------------------
-;; Estilo de indentação 42 (inspirado em BSD, ajustado pra Norminette)
-;; ---------------------------------------------------------------------------
-(c-add-style
- "42"
- '("bsd"
-   (c-basic-offset . 4)
-   (indent-tabs-mode . t)
-   (c-tab-always-indent . t)
-   (c-offsets-alist
-    (defun-open . 0)
-    (defun-close . 0)
-    (defun-block-intro . +)
-    (brace-list-open . 0)
-    (brace-list-close . 0)
-    (brace-list-intro . +)
-    (block-open . 0)
-    (block-close . 0)
-    (statement-block-intro . +)
-    (substatement-open . 0)
-    (substatement . +)
-    (case-label . 0)
-    (statement-case-intro . +)
-    (statement-cont . +))))
+;; =============================================================================
+;; 42 SCHOOL CONFIGURATION
+;; =============================================================================
+
+;; Load and enable 42 header
+(load! "header42")
+(header-42-enable)
+
+;; Load and setup Flycheck Norminette integration
+(load! "flycheck-norminette")
+
+(after! flycheck
+  ;; Setup norminette checker
+  (flycheck-norminette-setup)
+  
+  ;; Auto-enable norminette checking for C files
+  (add-hook 'c-mode-hook #'flycheck-norminette-auto-enable)
+  (add-hook 'c-ts-mode-hook #'flycheck-norminette-auto-enable)
+  
+  ;; Additional keybindings for norminette
+  (map! :map c-mode-map
+        :localleader
+        :desc "Check with norminette" "n" #'flycheck-norminette-check-buffer
+        :desc "Toggle norminette" "N" #'flycheck-norminette-toggle)
+  
+  ;; Customize flycheck display for better readability
+  (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
+  
+  ;; Show error count in modeline
+  (setq flycheck-mode-line-prefix "✓"))
+
 
 ;; ---------------------------------------------------------------------------
-;; TAB inteligente para o padrão da 42
+;; ESTILO 42 - Configuração Robusta para Tree-Sitter e CC-Mode
 ;; ---------------------------------------------------------------------------
-(defun my-c-tab-42 ()
-  "Se o cursor estiver no início da linha → indenta.
-Se estiver no meio da linha → insere TAB literal."
-  (interactive)
-  (if (and (bolp) (looking-at "[ \t]*$"))
-      (c-indent-line-or-region)
-    (insert-tab)))
 
-;; ---------------------------------------------------------------------------
-;; Configuração final do estilo 42 para C-mode
-;; ---------------------------------------------------------------------------
 (defun my-c-42-style ()
-  "Configura o estilo C da 42 (Norminette friendly)."
-  (setq indent-tabs-mode t        ;; usa tabs reais
-        tab-width 4               ;; tab = 4 colunas
-        fill-column 80)           ;; limite de 80 colunas
+  "Força o estilo da 42 (Tabs reais, largura 4) e desabilita interferências."
+  (interactive)
 
-  ;; Para CC Mode (c-mode, c++-mode, etc) podemos usar c-set-style
+  ;; 1. Configurações Básicas de Buffer
+  (setq tab-width 4
+        indent-tabs-mode t   ; Usa tabs reais
+        fill-column 80)      ; Coluna 80 para a linha vertical
+
+  ;; 2. Desabilitar "Adivinhadores" de estilo do Doom/Emacs
+  (when (fboundp 'dtrt-indent-mode) (dtrt-indent-mode -1)) ; Desliga detecção automática
+  (setq-local editorconfig-mode nil) ; Opcional: Desliga editorconfig se estiver atrapalhando
+
+  ;; 3. Configuração para c-mode (Legacy/CC-Mode)
   (when (eq major-mode 'c-mode)
-    (setq c-basic-offset 4)
-    (c-set-style "42")
-    ;; TAB inteligente só faz sentido aqui, porque usa c-indent-line-or-region
-    (local-set-key (kbd "TAB") #'my-c-tab-42))
+    (c-add-style "42-bsd"
+                 '("bsd"
+                   (c-basic-offset . 4)
+                   (c-tab-always-indent . t)))
+    (c-set-style "42-bsd"))
 
-  ;; Para c-ts-mode, não existe c-set-style; só usamos variáveis básicas
-  (when (eq major-mode 'c-ts-mode)
-    ;; c-ts-mode ainda respeita c-basic-offset/tab-width em Emacs 29+
-    (setq-local c-basic-offset 4)
-    ;; Se quiser um TAB “42 friendly” parecido:
-    (local-set-key (kbd "TAB") #'insert-tab))
+  ;; 4. Configuração para c-ts-mode (Tree-Sitter - O que você provavelmente está usando)
+  (when (or (eq major-mode 'c-ts-mode)
+            (eq major-mode 'c++-ts-mode))
+    ;; Estilo base do tree-sitter (bsd é o mais próximo da 42 - chaves na linha de baixo)
+    (setq-local c-ts-mode-indent-style 'bsd)
+    (setq-local c-ts-mode-indent-offset 4))
 
-  ;; coluna 80
+  ;; 5. Visualização
   (display-fill-column-indicator-mode 1)
-
-  ;; indentação automática
-  (electric-indent-mode 1)
-
-  ;; visualização de whitespace (TAB → »)
-  (setq whitespace-style '(face tabs tab-mark trailing spaces space-mark))
-  (setq whitespace-display-mappings
-        '((tab-mark ?\t [?» ?\t] [?\\ ?\t])
-          (space-mark ?\  [?·]   [?\.])))
   (whitespace-mode 1))
 
-;; ativa automaticamente no C-mode
-(add-hook 'c-mode-hook #'my-c-42-style)
-(add-hook 'c-ts-mode-hook #'my-c-42-style)
+;; Aplicar o hook com prioridade alta (append) para garantir que rode por último
+(add-hook 'c-mode-hook #'my-c-42-style t)
+(add-hook 'c-ts-mode-hook #'my-c-42-style t)
+(add-hook 'c++-mode-hook #'my-c-42-style t)
+(add-hook 'c++-ts-mode-hook #'my-c-42-style t)
 
-;; =============================================================================
-;; ESHELL CONFIGURATION
-;; =============================================================================
+;; TAB inteligente: Indenta se no começo da linha, insere TAB se no meio/fim
+(defun my-smart-tab-42 ()
+  (interactive)
+  (if (save-excursion
+        (skip-chars-backward " \t")
+        (bolp))
+      ;; Se estamos no começo da linha (ou só tem espaço antes), indentar
+      (if (derived-mode-p 'c-ts-mode 'c++-ts-mode)
+          (call-interactively #'indent-for-tab-command) ; Tree-sitter
+        (c-indent-line-or-region))                      ; CC-mode
+    ;; Se estamos no meio do texto, inserir TAB real
+    (insert "\t")))
 
-(after! eshell
-  ;; -------------------------
-  ;; ALIASES for 42 projects (C)
-  ;; -------------------------
+;; Força o bind do TAB
+(map! :after cc-mode
+      :map c-mode-base-map
+      "<tab>" #'my-smart-tab-42
+      "TAB"   #'my-smart-tab-42)
 
-  ;; Compile with 42 standard flags
-  (add-hook 'eshell-mode-hook
-    (lambda ()
-    (eshell/alias "cc42" "cc -Wall -Wextra -Werror $* -o a.out")
+(map! :after c-ts-mode
+      :map c-ts-mode-map
+      "<tab>" #'my-smart-tab-42
+      "TAB"   #'my-smart-tab-42)
 
-    ;; Run program
-    (eshell/alias "r42" "./a.out")
-
-    ;; Clean binary
-    (eshell/alias "clean42" "rm -f a.out")
-
-    ;; Compile and run directly
-    (eshell/alias "cr42" "cc42 $* && ./a.out")
-
-    ;; Compile with valgrind
-    (eshell/alias "val42" "cc42 $* && valgrind --leak-check=full ./a.out")
-
-    ;; Norminette check (installed via pipx)
-    (when (executable-find "norminette")
-    (eshell/alias "n42" "norminette $*"))
-    )
-  )
-)
 
 ;; =============================================================================
 ;; EGLOT CONFIGURATION - LSP for C with 42 Style
@@ -406,4 +364,39 @@ RULES:
   ;; Adiciona o hook quando o gptel for ativado num buffer
   (add-hook 'gptel-mode-hook #'my-gptel-setup-directive)
 
+)
+
+
+;; =============================================================================
+;; ESHELL CONFIGURATION
+;; =============================================================================
+
+(after! eshell
+  ;; -------------------------
+  ;; ALIASES for 42 projects (C)
+  ;; -------------------------
+
+  ;; Compile with 42 standard flags
+  (add-hook 'eshell-mode-hook
+    (lambda ()
+    (eshell/alias "cc42" "cc -Wall -Wextra -Werror $* -o a.out")
+
+    ;; Run program
+    (eshell/alias "r42" "./a.out")
+
+    ;; Clean binary
+    (eshell/alias "clean42" "rm -f a.out")
+
+    ;; Compile and run directly
+    (eshell/alias "cr42" "cc42 $* && ./a.out")
+
+    ;; Compile with valgrind
+    (eshell/alias "val42" "cc42 $* && valgrind --leak-check=full ./a.out")
+
+    ;; Norminette check (installed via pipx)
+    (when (executable-find "norminette")
+    (eshell/alias "n42" "norminette $*"))
+    )
   )
+)
+
