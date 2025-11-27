@@ -124,27 +124,18 @@ See URL `https://github.com/42School/norminette' for more information."
 
 ;;;###autoload
 (defun flycheck-norminette-setup ()
-  "Setup Flycheck Norminette integration.
-
-Adds norminette checkers to Flycheck and configures them for C files."
+  "Setup Flycheck Norminette integration."
   (interactive)
-  ;; Add our checkers to Flycheck
   (add-to-list 'flycheck-checkers 'c-norminette)
 
-  ;; Associar o checker aos modos baseados em C (inclusive tree-sitter)
-  (flycheck-add-mode 'c-norminette 'c-mode)
-  (flycheck-add-mode 'c-norminette 'c-ts-mode)
-  ;; Set norminette as the preferred checker for C files
-  (flycheck-add-next-checker 'c/c++-clang 'c-norminette)
+  ;; Removemos as chamadas de flycheck-add-next-checker daqui para
+  ;; deixar o config.el controlar a ordem (evita conflito com eglot)
 
   ;; Configure flycheck for better norminette experience
-  (setq-default
-   ;; Show errors immediately
-   flycheck-check-syntax-automatically '(save mode-enabled)
-   ;; Display errors in a more readable format
-   flycheck-display-errors-delay 0.3)
-  
-  (message "Flycheck Norminette integration enabled!"))
+  (setq-default flycheck-check-syntax-automatically '(save mode-enabled newline)
+                flycheck-display-errors-delay 0.3)
+
+  (message "Flycheck Norminette integration ready!"))
 
 ;; =============================================================================
 ;; INTERACTIVE COMMANDS

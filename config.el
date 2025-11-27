@@ -152,24 +152,32 @@
 (load! "flycheck-norminette")
 
 (after! flycheck
-  ;; Setup norminette checker
+  ;; Configura o checker básico (para quando não estiver usando LSP)
   (flycheck-norminette-setup)
-  
-  ;; Auto-enable norminette checking for C files
-  (add-hook 'c-mode-hook #'flycheck-norminette-auto-enable)
-  (add-hook 'c-ts-mode-hook #'flycheck-norminette-auto-enable)
-  
-  ;; Additional keybindings for norminette
-  (map! :map c-mode-map
-        :localleader
-        :desc "Check with norminette" "n" #'flycheck-norminette-check-buffer
-        :desc "Toggle norminette" "N" #'flycheck-norminette-toggle)
-  
-  ;; Customize flycheck display for better readability
-  (setq flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
-  
-  ;; Show error count in modeline
-  (setq flycheck-mode-line-prefix "✓"))
+
+  ;; Garante que warnings do compilador não escondam erros da norminette
+  (setq flycheck-indication-mode 'right-fringe) ; Mostra ícones na direita para não poluir
+)
+
+
+;; =============================================================================
+;; EGLOT CONFIGURATION - LSP for C with 42 Style
+;; =============================================================================
+
+
+(after! eglot
+  ;; 2. A "Mágica" da Integração
+  ;; O Eglot cria dinamicamente um checker chamado 'eglot-check'.
+  ;; Nós precisamos dizer ao Flycheck: "Sempre que o eglot terminar, rode a norminette".
+
+  (defun my-chain-norminette-to-eglot ()
+    "Encadeia a norminette após o eglot-check em buffers C/C++."
+    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
+      ;; Adiciona c-norminette como o PRÓXIMO checker após o eglot
+      (flycheck-add-next-checker 'eglot-check 'c-norminette 'append)))
+
+  ;; Adiciona esse hook para rodar toda vez que o Eglot iniciar num buffer
+  (add-hook 'eglot-managed-mode-hook #'my-chain-norminette-to-eglot))
 
 
 ;; ---------------------------------------------------------------------------
@@ -240,86 +248,57 @@
 
 
 ;; =============================================================================
-;; EGLOT CONFIGURATION - LSP for C with 42 Style
-;; =============================================================================
-(after! eglot
-  (add-to-list 'eglot-server-programs
-               '(c-mode . ("clangd" "-j=3" "--background-index" "--clang-tidy"
-                                    "--completion-style=detailed"
-                                    "--header-insertion=iwyu"
-                                    "--pch-storage=memory")))
-
-  (defun my-c-c++-eglot-setup ()
-    "Configuração Eglot para C/C++ compatível com estilo 42."
-    ;; Não deixar o LSP mexer em indentação/formatting
-    (setq-local eglot-ignored-server-capabilities
-                '(:documentFormattingProvider
-                  :documentRangeFormattingProvider
-                  :documentOnTypeFormattingProvider))
-
-    ;; Ativar features úteis de navegação
-    (eldoc-mode 1)             ; doc na minibuffer
-    (flymake-mode 1)           ; diagnostics do clangd
-    (company-mode -1)          ; evitar conflito se por acaso company estiver
-
-    (flycheck-add-next-checker 'eglot-check 'c-norminette 'append)
-    ;; (você já usa corfu/cape)
-
-    ;; Atalhos locais sob leader para coisas comuns do Eglot
-    (map! :localleader
-          :map (c-mode-map c-ts-mode-map c++-mode-map c++-ts-mode-map)
-          "e" #'eglot          ; (re)conectar servidor
-          "r" #'eglot-rename
-          "a" #'eglot-code-actions
-          "f" #'eglot-format   ; se quiser formatar trecho manualmente
-          "h" #'eldoc-doc-buffer
-          "i" #'eglot-find-implementation
-          "d" #'eglot-find-declaration
-          "t" #'eglot-find-typeDefinition))
-
-  ;; Auto complete do eglot primeiro
-  (add-hook 'eglot-managed-mode-hook
-            (lambda ()
-              ;;Garante que o backend de completion do eglot esteja em primeiro
-              (setq-local completion-at-point-functions
-                          (cons #'eglot-completion-at-point
-                                (remove #'eglot-completion-at-point
-                                        completion-at-point-functions)))))
-  ;; Apply the setup when c-mode starts.
-  (add-hook 'c-mode-hook #'my-c-mode-eglot-setup)
-  (add-hook 'c-ts-mode-hook #'my-c-mode-eglot-setup)
-  (add-hook 'c++-mode-hook #'my-c-mode-eglot-setup)
-  (add-hook 'c++-ts-mode-hook #'my-c-mode-eglot-setup)
-)
-
-;; =============================================================================
 ;; GPTEL Configuration
 ;; =============================================================================
 (after! gptel
-  ;; Gemini
-  (setq gptel-model 'gemini-2.5-pro
-        gptel-backend (gptel-make-gemini "Gmenina"
-                        :key (getenv "GEMINI_API_KEY")
-                        :stream t
-                        :models '("gemini-2.5-pro" "gemini-3-pro-preview" "gemini-2.5-flash")))
-  ;; ChatGPT
-  (setq gptel-model 'gpt-4o
-        gptel-backend (gptel-make-openai "GPtoza"
-                        :key (getenv "OPENAI_API_KEY")
-                        :stream t
-                        :models '("gpt-4.1-mini" "gpt-4.1" "gpt-5.1")))
-  ;; Copilot
-  ;; OPTIONAL configuration
-  (setq gptel-model 'claude-3.7-sonnet
-        gptel-backend (gptel-make-gh-copilot "Copilot"))
+  ;; ---------------------------------------------------------------------------
+  ;; 1. CONFIGURAÇÃO GERAL
+  ;; ---------------------------------------------------------------------------
 
-  ;; Configuração de Diretrizes (System Prompts)
+  ;; Define Org-mode como o formato padrão para os buffers de chat
+  (setq gptel-default-mode 'org-mode)
+
+  ;; ---------------------------------------------------------------------------
+  ;; 2. BACKENDS (Modelos)
+  ;; ---------------------------------------------------------------------------
+
+  ;; --- OPÇÃO 1: GEMINI (O PADRÃO) ---
+  ;; Definimos ele numa variável e já setamos como o backend ativo
+  (let ((gemini-backend (gptel-make-gemini "Gemini"
+                          :key (getenv "GEMINI_API_KEY")
+                          :stream t
+                          :models '(gemini-2.5-pro
+                                    gemini-3-pro-preview
+                                    gemini-2.5-flash
+                                    gemini-2.0-flash-exp))))
+
+    ;; AQUI definimos que ele é o chefe (Default)
+    (setq gptel-backend gemini-backend)
+    (setq gptel-model 'gemini-1.5-pro-latest))
+
+  ;; --- OPÇÃO 2: GITHUB COPILOT ---
+  ;; O gptel agora suporta Copilot nativamente.
+  ;; Ele tenta ler o token automaticamente do arquivo de config do Copilot.
+  (gptel-make-gh-copilot "Copilot"
+    :stream t
+    :models '(gpt-4o claude-3.5-sonnet))
+
+  ;; --- OPÇÃO 3: CHATGPT (OPENAI) ---
+  (gptel-make-openai "ChatGPT"
+    :key (getenv "OPENAI_API_KEY")
+    :stream t
+    :models '(gpt-4o gpt-4-turbo gpt-3.5-turbo))
+
+  ;; ---------------------------------------------------------------------------
+  ;; 3. PERSONAS / DIRETRIZES (Contexto 42, Python, etc)
+  ;; ---------------------------------------------------------------------------
+
   (setq gptel-directives
-        '((default . "You are a large language model living in Emacs and a helpful assistant. Respond concisely.")
+      '((default . "You are a large language model living in Emacs and a helpful assistant. Respond concisely.")
 
-          (programmer . "You are an expert programmer. Provide code snippets and explanations. Focus on clean, efficient, and modern code.")
+        (programmer . "You are an expert programmer. Provide code snippets and explanations. Focus on clean, efficient, and modern code.")
 
-          (c-42 . "You are an expert C tutor at 42 School.
+        (c-42 . "You are an expert C tutor at 42 School.
 CRITICAL RULES:
 1. STRICTLY follow 42 Norminette rules:
    - Max 25 lines per function.
