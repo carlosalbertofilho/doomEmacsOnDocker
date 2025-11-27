@@ -101,34 +101,51 @@
 ;; =============================================================================
 
 (after! corfu
-  ;; Ativa autocompletar automático enquanto digita
+  ;; 1. COMPORTAMENTO GERAL
   (setq corfu-auto t)                    ; Habilita auto-popup
-  (setq corfu-auto-delay 0.2)            ; Delay em segundos (0.2 = 200ms)
-  (setq corfu-auto-prefix 2)             ; Mínimo de caracteres para iniciar
+  (setq corfu-auto-delay 0.1)            ; Mais rápido (0.1s). Se ficar pesado no Docker, volte para 0.2
+  (setq corfu-auto-prefix 2)             ; Mínimo de 2 caracteres para ativar
 
-  ;; Comportamento do popup
-  (setq corfu-cycle t)                   ; Permite navegar circularmente
-  (setq corfu-preselect 'prompt)         ; Comportamento de pré-seleção
-  (setq corfu-quit-no-match 'separator)  ; Quando sair sem match
-  (setq corfu-quit-at-boundary t)        ; Sair ao alcançar limite de palavra
+  ;; 2. SELEÇÃO E NAVEGAÇÃO
+  (setq corfu-cycle t)                   ; Permite navegar do último para o primeiro
+  (setq corfu-preselect 'first)          ; [MELHORIA] Seleciona o primeiro candidato automaticamente (mais rápido que 'prompt)
+  (setq corfu-quit-no-match 'separator)  ; Comportamento ao sair
+  (setq corfu-quit-at-boundary t)        ; Sair ao encontrar separador
 
-  ;; Visual
-  (setq corfu-count 10)                  ; Número de candidatos visíveis
-  (setq corfu-max-width 80)              ; Largura máxima do popup
-  (setq corfu-min-width 20)              ; Largura mínima do popup
+  ;; 3. HISTÓRICO (Aprendizado)
+  ;; O Corfu lembrará suas escolhas frequentes e as colocará no topo
+  (corfu-history-mode 1)
+  (savehist-mode 1)
+  (add-to-list 'savehist-additional-variables 'corfu-history)
 
-  ;; Ordenação com orderless (já configurado no seu init.el)
-  (setq corfu-sort-override-function nil)
+  ;; 4. DOCUMENTAÇÃO FLUTUANTE (Semelhante ao VS Code)
+  ;; Mostra documentação/assinatura da função ao lado do popup
+  (corfu-popupinfo-mode 1)
+  (setq corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay para aparecer (0.5s) e atualizar (0.2s)
+  (setq corfu-popupinfo-max-width 70)
+  (setq corfu-popupinfo-max-height 20)
 
-  ;; Keybindings customizados
+  ;; 5. VISUAL
+  (setq corfu-count 14)                  ; Mostra mais candidatos (padrão é 10)
+  (setq corfu-max-width 100)             ; Permite largura maior (útil para C++ templates)
+  (setq corfu-min-width 20)
+
+  ;; 6. KEYBINDINGS
   (map! :map corfu-map
-        "C-n" #'corfu-next           ; Ctrl-n: próxima sugestão
-        "C-p" #'corfu-previous       ; Ctrl-p: sugestão anterior
-        "C-d" #'corfu-show-documentation  ; Ctrl-d: documentação
-        "<tab>" #'corfu-complete     ; Tab: confirma seleção
-        "TAB" #'corfu-complete
-        "RET" nil                    ; Enter: não confirma automaticamente
-        "<return>" nil))
+        "C-n"       #'corfu-next
+        "C-p"       #'corfu-previous
+        "C-j"       #'corfu-next                ; Alternativa VIM-like para descer
+        "C-k"       #'corfu-previous            ; Alternativa VIM-like para subir
+        "<tab>"     #'corfu-complete
+        "TAB"       #'corfu-complete
+        "S-TAB"     #'corfu-previous            ; Shift-Tab volta na lista
+        "<backtab>" #'corfu-previous
+        "RET"       nil                         ; Enter cria nova linha (Padrão do Doom, evita completar sem querer)
+        "<return>"  nil
+        ;; Controle da janela de documentação
+        "M-d"       #'corfu-popupinfo-toggle    ; Liga/Desliga doc manualmente
+        "M-p"       #'corfu-popupinfo-scroll-down ; Rola a doc para cima
+        "M-n"       #'corfu-popupinfo-scroll-up))
 
 ;; =============================================================================
 ;; CAPE - Completion At Point Extensions (para Corfu)
