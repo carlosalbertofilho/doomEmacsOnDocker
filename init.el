@@ -98,8 +98,8 @@
        ;;editorconfig      ; let someone else argue about tabs vs spaces
        ;;ein               ; tame Jupyter notebooks with emacs
        (eval +overlay)     ; run code, run (also, repls)
-       lookup              ; navigate your code and its documentation
-       ;;llm               ; when I said you needed friends, I didn't mean...
+       (lookup +dictionary +docsets +offline)              ; navigate your code and its documentation
+       llm               ; when I said you needed friends, I didn't mean...
        (lsp +eglot)      ; M-x vscode
        magit             ; a git porcelain for Emacs
        make              ; run make tasks from Emacs

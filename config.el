@@ -335,104 +335,75 @@ Se estiver no meio da linha → insere TAB literal."
 )
 
 ;; =============================================================================
-;; AI ASSISTANTS - ELLAMA
+;; GPTEL Configuration
 ;; =============================================================================
+(after! gptel
+  ;; Gemini
+  (setq gptel-model 'gemini-2.5-pro
+        gptel-backend (gptel-make-gemini "Gmenina"
+                        :key (getenv "GEMINI_API_KEY")
+                        :stream t
+                        :models '("gemini-2.5-pro" "gemini-3-pro-preview" "gemini-2.5-flash")))
+  ;; ChatGPT
+  (setq gptel-model 'gpt-4o
+        gptel-backend (gptel-make-openai "GPtoza"
+                        :key (getenv "OPENAI_API_KEY")
+                        :stream t
+                        :models '("gpt-4.1-mini" "gpt-4.1" "gpt-5.1")))
+  ;; Copilot
+  ;; OPTIONAL configuration
+  (setq gptel-model 'claude-3.7-sonnet
+        gptel-backend (gptel-make-gh-copilot "Copilot"))
 
-(use-package! ellama
-  :defer t
-  :init
-  ;; General settings
-  (setq ellama-language "English")
-  (setq ellama-sessions-directory (expand-file-name "ellama-sessions" doom-cache-dir))
+  ;; Configuração de Diretrizes (System Prompts)
+  (setq gptel-directives
+        '((default . "You are a large language model living in Emacs and a helpful assistant. Respond concisely.")
 
-  :config
-  ;; Load LLM backends after ellama is loaded
-  (require 'llm-gemini nil t)
-  (require 'llm-openai nil t)
-  
-  ;; Default provider: OpenAI GPT-4
-  ;; API key should be set via environment variable OPENAI_API_KEY
-  (when (and (featurep 'llm-openai)
-             (getenv "OPENAI_API_KEY"))
-    (setq ellama-provider
-          (make-llm-openai
-           :key (getenv "OPENAI_API_KEY")
-           :chat-model "gpt-5.1")))
-  
-  ;; Alternative providers configuration
-  ;; Uncomment and configure the one you want to use:
-  
-  ;; Google Gemini
-  (when (getenv "GEMINI_API_KEY")
-    (require 'llm-gemini)
-    (setq ellama-provider
-          (make-llm-gemini
-           :key (getenv "GEMINI_API_KEY")
-           :chat-model "gemini-2.5-pro")))
+          (programmer . "You are an expert programmer. Provide code snippets and explanations. Focus on clean, efficient, and modern code.")
 
-  ;; Keybindings - Using SPC A (uppercase) to avoid conflicts with embark
-  (map! :leader
-        ;; Prefix A - AI Assistant (ações gerais)
-        (:prefix ("A" . "AI Assistant")
-         :desc "Ask about selection" "a" #'ellama-ask-about
-         :desc "Chat"                "c" #'ellama-chat
-         :desc "Define word"         "d" #'ellama-define-word
-         :desc "Summarize"           "s" #'ellama-summarize
-         :desc "Code review"         "r" #'ellama-code-review
-         :desc "Improve code"        "i" #'ellama-code-improve
-         :desc "Complete code"       "C" #'ellama-code-complete
-         :desc "Add code"            "A" #'ellama-code-add
-         :desc "Translate"           "t" #'ellama-translate
-         :desc "Session"             "S" #'ellama-session
-         :desc "Switch provider"     "p" #'my/ellama-switch-provider
+          (c-42 . "You are an expert C tutor at 42 School.
+CRITICAL RULES:
+1. STRICTLY follow 42 Norminette rules:
+   - Max 25 lines per function.
+   - Variable declarations ONLY at the top of the function scope.
+   - No `for` loops (use `while`).
+   - No `do...while`.
+   - No `switch/case`.
+   - Macros must be UPPERCASE.
+   - Indentation: Use real tabs (4 spaces width).
+2. Explain complex concepts simply.
+3. If providing code, ensure it compiles with `-Wall -Wextra -Werror`.
+4. Suggest splitting functions if logic is too long.")
 
-         ;; Submenu X: contexto → SPC A X ...
-         (:prefix ("x" . "AI Context")
-          :desc "Add region to context"    "a" #'ellama-context-add-region
-          :desc "Add buffer to context"    "b" #'ellama-context-add-buffer
-          :desc "Add file to context"      "f" #'ellama-context-add-file
-          :desc "Remove item from context" "r" #'ellama-context-remove
-          :desc "Clear all context"        "c" #'ellama-context-clear
-          :desc "Show current context"     "s" #'ellama-context-show)))
+          (cpp-42 . "You are an expert C++ mentor at 42 School.
+CRITICAL RULES:
+1. Adhere to C++98 standard (unless asked otherwise).
+2. ALWAYS implement the 'Orthodox Canonical Form' for classes (Constructor, Destructor, Copy Constructor, Assignment Operator).
+3. No external libraries (like Boost) unless specified.
+4. Use standard STL containers.
+5. Explain memory management (RAII) clearly.")
+
+          (python . "You are a senior Python Developer.
+RULES:
+1. Follow PEP8 strict guidelines.
+2. Use Type Hinting (typing module) for all function arguments and returns.
+3. Write concise, pythonic code (list comprehensions where appropriate).
+4. Include docstrings for classes and complex functions.
+5. Prefer modern Python 3.10+ syntax.")))
+
+  ;; Função para trocar o prompt automaticamente baseada no modo
+  (defun my-gptel-setup-directive ()
+    (let ((directive (pcase major-mode
+                     ('c-mode 'c-42)           ; Se for C, usa a persona 42
+                     ('c-ts-mode 'c-42)        ; Tree-sitter C
+                     ('c++-mode 'cpp-42)       ; C++
+                     ('c++-ts-mode 'cpp-42)
+                     ('python-mode 'python)    ; Python
+                     ('python-ts-mode 'python)
+                     (_ 'default))))           ; Caso contrário, default
+    (setq-local gptel-system-message (alist-get directive gptel-directives))))
+
+  ;; Adiciona o hook quando o gptel for ativado num buffer
+  (add-hook 'gptel-mode-hook #'my-gptel-setup-directive)
+
   )
-
-;; Helper function to switch between providers
-(defun my/ellama-switch-provider (provider)
-  "Switch Ellama provider interactively."
-  (interactive
-   (list (intern (completing-read "Select provider: "
-                                   '("openai-gpt4" "openai-gpt3.5" "gemini")
-                                   nil t))))
-  (require 'llm-openai)
-  (pcase provider
-    ('openai-gpt4
-     (if (getenv "OPENAI_API_KEY")
-         (progn
-           (setq ellama-provider
-                 (make-llm-openai
-                  :key (getenv "OPENAI_API_KEY")
-                  :chat-model "gpt-4"))
-           (message "Switched to OpenAI GPT-4"))
-       (user-error "OPENAI_API_KEY environment variable not set")))
-    ('openai-gpt3.5
-     (if (getenv "OPENAI_API_KEY")
-         (progn
-           (setq ellama-provider
-                 (make-llm-openai
-                  :key (getenv "OPENAI_API_KEY")
-                  :chat-model "gpt-4o"))
-           (message "Switched to OpenAI GPT-3.5 Turbo"))
-       (user-error "OPENAI_API_KEY environment variable not set")))
-    ('gemini
-     (if (getenv "GEMINI_API_KEY")
-         (progn
-           (require 'llm-gemini)
-           (setq ellama-provider
-                 (make-llm-gemini
-                  :key (getenv "GEMINI_API_KEY")
-                  :chat-model "gemini-pro"))
-           (message "Switched to Google Gemini Pro"))
-       (user-error "GEMINI_API_KEY environment variable not set")))
-    (_ (user-error "Unknown provider"))))
-
-
