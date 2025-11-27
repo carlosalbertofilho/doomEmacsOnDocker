@@ -286,10 +286,10 @@ Se estiver no meio da linha → insere TAB literal."
 ;; =============================================================================
 (after! eglot
   (add-to-list 'eglot-server-programs
-               '(c-mode . ("clangd" "--background-index" "--clang-tidy"
-                                   "--completion-style=detailed"
-                                   "--header-insertion=iwyu"
-                                   "--pch-storage=memory")))
+               '(c-mode . ("clangd" "-j=3" "--background-index" "--clang-tidy"
+                                    "--completion-style=detailed"
+                                    "--header-insertion=iwyu"
+                                    "--pch-storage=memory")))
 
   (defun my-c-c++-eglot-setup ()
     "Configuração Eglot para C/C++ compatível com estilo 42."
