@@ -1,0 +1,217 @@
+* Emacs on Docker
+
+** Visão Geral
+
+Este projeto fornece um ambiente de desenvolvimento completo e isolado para o *Doom Emacs*, empacotado em um contêiner *Docker*. Ele foi projetado para oferecer uma experiência pronta para uso, sem a necessidade de instalar dependências diretamente no seu sistema operacional.
+
+O contêiner é baseado em *Debian* e inclui uma seleção de ferramentas essenciais para desenvolvimento, com foco em *C/C++* e integração com assistentes de IA.
+
+-----
+
+** Ferramentas Inclusas
+
+- *Emacs 29* com a configuração *Doom Emacs*
+- *Shell Moderno*:
+  - =zsh= (shell padrão)
+  - =zsh-autosuggestions= e =zsh-syntax-highlighting=
+  - =starship= (prompt personalizável)
+- *Ferramentas de Desenvolvimento C/C++*:
+  - =clang= e =clangd= (compilador e language server)
+  - =gdb= (debugger)
+  - =cmake= (build system)
+  - =valgrind= (análise de memória)
+  - =build-essential= (pacote com =gcc=, =g++=, =make=, etc.)
+- *Análise de Código Avançada*:
+  - *LSP* com =eglot= para diagnósticos e autocompletar
+  - *Tree-sitter* para parsing de sintaxe mais rápido e preciso
+- *Utilitários de Linha de Comando*:
+  - =git=, =ripgrep=, =fd-find=, =fzf=, =curl=, =pandoc=, =shellcheck=
+- *Suporte a Python*:
+  - =python3=, =pip= e =pipx=
+  - =norminette= (para estudantes da 42, instalada via pipx)
+- *Fontes Nerd Fonts*:
+  - JetBrains Mono, Fira Code, Iosevka, Source Code Pro
+- *GPG/Criptografia*:
+  - Configuração de GPG para commits assinados (=+gnupg=)
+- *Integração 42 School*:
+  - *Header 42* automático com =SPC c h= e atualização ao salvar
+  - *Flycheck + Norminette* com verificação em tempo real, encadeado com o LSP
+  - *Estilo de código 42* forçado (indentação com tabs, 80 colunas)
+  - *Aliases Eshell* otimizados para projetos C
+- *AI Assistants*:
+  - Módulo *=llm=* com o backend *=gptel=*
+  - Suporte a *Google Gemini*, *OpenAI (ChatGPT)* e *GitHub Copilot*
+  - "Personas" customizadas que se ativam por tipo de arquivo (e.g., tutor de C para a 42)
+
+-----
+
+** Como Usar
+
+*** 1. Pré-requisitos
+
+- *Docker* instalado e em execução na sua máquina.
+
+*** 2. Construa a Imagem Docker
+
+O =Dockerfile= cria um usuário =dev= com o mesmo UID/GID do seu usuário local para evitar problemas de permissão.
+
+#+begin_src bash
+# Com docker 
+docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t emacs-dev .
+
+# Com podman
+podman build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t emacs-dev .
+#+end_src
+
+*** 3. Execute o Contêiner
+
+Para iniciar o Emacs, execute o contêiner montando seus diretórios e passando as chaves de API.
+
+#+begin_src bash
+# Exporte suas variáveis de ambiente
+export OPENAI_API_KEY="SUA_CHAVE_OPENAI"
+export GEMINI_API_KEY="SUA_CHAVE_GEMINI"
+export FT_LOGIN="SEU_LOGIN_42"
+
+# Com docker
+docker run -it --rm \
+  --hostname emacs42 \
+  --ipc=host \
+  -v /dev/shm:/dev/shm \
+  -v "$HOME/Projects:/home/dev/Projects:z" \
+  -v "$HOME/.ssh:/home/dev/.ssh:ro,z" \
+  -v "$HOME/.gitconfig:/home/dev/.gitconfig:ro,z" \
+  -e OPENAI_API_KEY \
+  -e GEMINI_API_KEY \
+  -e FT_LOGIN \
+  --userns=keep-id \
+  emacs-dev /usr/bin/zsh
+
+# Com podman
+podman run -it --rm \
+  --hostname emacs42 \
+  --ipc=host \
+  -v /dev/shm:/dev/shm \
+  -v "$HOME/Projects:/home/dev/Projects:z" \
+  -v "$HOME/.ssh:/home/dev/.ssh:ro,z" \
+  -v "$HOME/.gitconfig:/home/dev/.gitconfig:ro,z" \
+  -e OPENAI_API_KEY \
+  -e GEMINI_API_KEY \
+  -e FT_LOGIN \
+  --userns=keep-id \
+  emacs-dev /usr/bin/zsh
+#+end_src
+
+*Explicação dos Parâmetros:*
+
+- =-v "HOST_PATH:CONTAINER_PATH:OPTIONS"=: Monta um diretório local dentro do contêiner.
+  - =:ro=: Torna o volume somente leitura (segurança para =.ssh= e =.gitconfig=).
+  - =:z=: Ajusta os rótulos de segurança do *SELinux* (essencial no Fedora/RHEL).
+- =-e VARIAVEL=: Passa uma variável de ambiente do host para o contêiner.
+
+-----
+
+** Dicas
+
+*** Crie um Alias para Facilitar
+
+Adicione um =alias= ao seu =~/.bashrc= ou =~/.zshrc= para simplificar a execução.
+
+#+begin_src bash
+alias emacs-docker="docker run -it --rm \
+  --hostname emacs42 \
+  --ipc=host \
+  -v /dev/shm:/dev/shm \
+  -v \"\$HOME/Projects:/home/dev/Projects:z\" \
+  -v \"\$HOME/.ssh:/home/dev/.ssh:ro,z\" \
+  -v \"\$HOME/.gitconfig:/home/dev/.gitconfig:ro,z\" \
+  -e OPENAI_API_KEY \
+  -e GEMINI_API_KEY \
+  -e FT_LOGIN \
+  emacs-dev"
+#+end_src
+
+Após adicionar, recarregue seu shell (=source ~/.zshrc=) e execute com =emacs-docker=.
+
+-----
+
+** Funcionalidades 42 School
+
+*** Header 42 Automático
+
+- *=SPC c h=*: Insere ou atualiza o header 42.
+- *Atualização automática*: O campo "Updated" é preenchido ao salvar.
+- *Autor dinâmico*: Usa a variável de ambiente =FT_LOGIN= ou =USER=.
+
+*** Verificação com Norminette
+
+- *Integração com Flycheck*: Verificação em tempo real de erros da Norminette.
+- *Encadeamento com LSP (=eglot=)*: Erros de compilação e de norma aparecem juntos, sem conflitos.
+- *Highlight de erros* diretamente nas linhas com problemas e mensagens contextualizadas.
+- *Keybindings*:
+  - *=SPC c x n=*: Executar verificação manual (=flycheck-buffer=).
+  - *=SPC c x N=*: Ativar/desativar verificação automática (=flycheck-mode=).
+
+*** Estilo de Código Robusto
+
+- *Indentação 42 Forçada*: A configuração garante o uso de tabs reais com largura 4, desativando detectores automáticos que poderiam interferir.
+- *Indicador de 80 colunas* e =whitespace-mode= ativados por padrão em arquivos C.
+- *TAB Inteligente*: A tecla =TAB= indenta a linha se o cursor estiver no início e insere um caractere de tabulação se estiver no meio, como esperado.
+
+*** Fontes Configuradas
+
+- *Iosevka* (padrão) - Fonte estreita que maximiza o espaço horizontal.
+- *Fira Code* - Excelente suporte a ligaduras.
+- *JetBrains Mono* - Muito popular, ótima legibilidade.
+- *Source Code Pro* - Clássica da Adobe, altamente legível.
+
+Para trocar, edite =config.el= e descomente a fonte desejada.
+
+*** Eshell Aliases para 42
+
+Aliases pré-configurados no Eshell (=SPC o e=) para agilizar o workflow:
+
+- *=cc42 file.c=*: Compila com flags da 42 (=-Wall -Wextra -Werror=).
+- *=r42=*: Executa =./a.out=.
+- *=clean42=*: Remove o binário =a.out=.
+- *=cr42 file.c=*: Compila e executa diretamente.
+- *=val42 file.c=*: Compila e executa com valgrind.
+- *=n42 file.c=*: Executa a verificação da norminette no arquivo.
+
+-----
+
+** AI Assistants - Gptel (=llm= module)
+
+Integração com assistentes de IA via =gptel= para aumentar a produtividade.
+
+*** Provedores Suportados
+
+- *Google Gemini* (padrão)
+- *GitHub Copilot*
+- *OpenAI* (GPT-4o, GPT-4 Turbo, etc.)
+
+*** Personas (Prompts de Sistema)
+
+O ambiente vem com "personas" pré-configuradas que são *ativadas automaticamente* dependendo do tipo de arquivo, garantindo respostas contextuais e precisas:
+
+- *=c-42=*: Um tutor C especialista na Norminette da 42. Fornece código que segue estritamente as regras (sem =for=, =do-while=, etc.) e explica conceitos complexos.
+- *=cpp-42=*: Um mentor C++ focado no padrão C++98 e na Forma Canônica Ortodoxa.
+- *=python=*: Um desenvolvedor Python sênior que segue PEP8, usa Type Hinting e escreve código "pythônico".
+- *=default=*: Assistente genérico e conciso para outros tipos de arquivo.
+
+*** Keybindings (prefixo =SPC c A=)
+
+- *=SPC c A c=*: Iniciar um novo chat com a IA.
+- *=SPC c A a=*: Perguntar sobre a região de código selecionada (=gptel-ask=).
+- *=SPC c A e=*: Editar a região selecionada com instruções (=gptel-edit=).
+- *=SPC c A r=*: Revisar o código na região (=gptel-review=).
+- *=SPC c A d=*: Definir uma palavra ou conceito.
+- *=SPC c A p=*: Trocar de provedor (Gemini, ChatGPT, Copilot).
+- *=SPC c A m=*: Trocar de modelo (e.g., =gemini-1.5-pro= para =gemini-1.5-flash=).
+- *=SPC c A s=*: Gerenciar sessões de chat.
+
+*** Exemplos de Uso
+
+1.  *Code Review 42*: Selecione uma função em C, pressione =SPC c A r=, e a persona =c-42= irá revisá-la de acordo com a Norminette.
+2.  *Explicar Código*: Selecione uma expressão complexa e use =SPC c A a= para pedir uma explicação.
+3.  *Refatoração*: Selecione um trecho de código e use =SPC c A e= com a instrução "Refatore este código para ser mais legível".
