@@ -174,6 +174,9 @@
 
   ;; Garante que warnings do compilador não escondam erros da norminette
   (setq flycheck-indication-mode 'right-fringe) ; Mostra ícones na direita para não poluir
+
+  ;; Diz explicitamente: Se rodar c-norminette, rode c/c++-clang em seguida.
+  (flycheck-add-next-checker 'c-norminette 'c/c++-clang)
 )
 
 
@@ -183,18 +186,23 @@
 
 
 (after! eglot
-  ;; 2. A "Mágica" da Integração
-  ;; O Eglot cria dinamicamente um checker chamado 'eglot-check'.
-  ;; Nós precisamos dizer ao Flycheck: "Sempre que o eglot terminar, rode a norminette".
+  ;; Diz ao Eglot para ignorar os recursos de formatação do servidor (clangd).
+  ;; Assim, o Emacs (sua função my-c-42-style) mantém o controle total dos Tabs.
+  (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :documentRangeFormattingProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
+
 
   (defun my-chain-norminette-to-eglot ()
     "Encadeia a norminette após o eglot-check em buffers C/C++."
-    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
+    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode 'flycheck-eglot-mode)
       ;; Adiciona c-norminette como o PRÓXIMO checker após o eglot
       (flycheck-add-next-checker 'eglot-check 'c-norminette 'append)))
 
   ;; Adiciona esse hook para rodar toda vez que o Eglot iniciar num buffer
-  (add-hook 'eglot-managed-mode-hook #'my-chain-norminette-to-eglot))
+  (add-hook 'eglot-managed-mode-hook #'my-chain-norminette-to-eglot)
+  ;; REeforça o estilo 42
+  (add-hook 'eglot-managed-mode-hook #'my-c-42-style))
 
 
 ;; ---------------------------------------------------------------------------
@@ -205,14 +213,15 @@
   "Força o estilo da 42 (Tabs reais, largura 4) e desabilita interferências."
   (interactive)
 
-  ;; 1. Configurações Básicas de Buffer
-  (setq tab-width 4
-        indent-tabs-mode t   ; Usa tabs reais
-        fill-column 80)      ; Coluna 80 para a linha vertical
+   ;; 1. Configurações Básicas de Buffer (Norma v4.1)
+  (setq-local indent-tabs-mode t        ; Usa TABS reais, não espaços.
+              tab-width 4              ; Largura visual do TAB.
+              c-basic-offset 4         ; Garante que cc-mode também use 4.
+              fill-column 80)          ; Coluna 80 para a linha vertical.
 
   ;; 2. Desabilitar "Adivinhadores" de estilo do Doom/Emacs
-  (when (fboundp 'dtrt-indent-mode) (dtrt-indent-mode -1)) ; Desliga detecção automática
-  (setq-local editorconfig-mode nil) ; Opcional: Desliga editorconfig se estiver atrapalhando
+  (when (fboundp 'dtrt-indent-mode) (dtrt-indent-mode -1))
+  (setq-local editorconfig-mode nil)
 
   ;; 3. Configuração para c-mode (Legacy/CC-Mode)
   (when (eq major-mode 'c-mode)
@@ -222,16 +231,20 @@
                    (c-tab-always-indent . t)))
     (c-set-style "42-bsd"))
 
-  ;; 4. Configuração para c-ts-mode (Tree-Sitter - O que você provavelmente está usando)
-  (when (or (eq major-mode 'c-ts-mode)
-            (eq major-mode 'c++-ts-mode))
-    ;; Estilo base do tree-sitter (bsd é o mais próximo da 42 - chaves na linha de baixo)
+  ;; 4. Configuração para c-ts-mode (Tree-Sitter - O Padrão Moderno)
+  (when (or (eq major-mode 'c-ts-mode) (eq major-mode 'c++-ts-mode))
     (setq-local c-ts-mode-indent-style 'bsd)
     (setq-local c-ts-mode-indent-offset 4))
 
-  ;; 5. Visualização
+  ;; 5. Visualização e Reforço Ativo
   (display-fill-column-indicator-mode 1)
-  (whitespace-mode 1))
+
+  ;; Ativa o modo whitespace, mas de forma menos intrusiva
+  (setq-local whitespace-style '(face trailing tabs))
+  (whitespace-mode 1)
+
+  ;; Isso remove espaços no final da linha automaticamente.
+  (add-hook 'before-save-hook #'whitespace-cleanup nil t))
 
 ;; Aplicar o hook com prioridade alta (append) para garantir que rode por último
 (add-hook 'c-mode-hook #'my-c-42-style t)
