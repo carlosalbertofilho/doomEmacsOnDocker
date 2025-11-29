@@ -284,14 +284,13 @@
   (let ((gemini-backend (gptel-make-gemini "Gemini"
                           :key (getenv "GEMINI_API_KEY")
                           :stream t
-                          :models '(gemini-2.5-pro
-                                    gemini-3-pro-preview
-                                    gemini-2.5-flash
-                                    gemini-2.0-flash-exp))))
+                          :models '(gemini-3-pro-preview
+                                    gemini-2.5-pro
+                                    gemini-2.5-flash))))
 
     ;; AQUI definimos que ele é o chefe (Default)
     (setq gptel-backend gemini-backend)
-    (setq gptel-model 'gemini-1.5-pro-latest))
+    (setq gptel-model 'gemini-2.5-pro))
 
   ;; --- OPÇÃO 2: GITHUB COPILOT ---
   ;; O gptel agora suporta Copilot nativamente.
