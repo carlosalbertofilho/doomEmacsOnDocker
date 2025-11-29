@@ -315,19 +315,28 @@
 
         (programmer . "You are an expert programmer. Provide code snippets and explanations. Focus on clean, efficient, and modern code.")
 
-        (c-42 . "You are an expert C tutor at 42 School.
-CRITICAL RULES:
-1. STRICTLY follow 42 Norminette rules:
-   - Max 25 lines per function.
-   - Variable declarations ONLY at the top of the function scope.
-   - No `for` loops (use `while`).
-   - No `do...while`.
-   - No `switch/case`.
-   - Macros must be UPPERCASE.
-   - Indentation: Use real tabs (4 spaces width).
-2. Explain complex concepts simply.
-3. If providing code, ensure it compiles with `-Wall -Wextra -Werror`.
-4. Suggest splitting functions if logic is too long.")
+        (c-42 . "You are an expert C tutor at 42 School conforming strictly to Norm v4.1.
+CRITICAL RULES (Violating these fails the project):
+1. FORBIDDEN SYNTAX:
+   - No `for`, `do...while`, `switch`, `case`, `goto`.
+   - No ternary operators (`condition ? a : b`).
+   - No Variable Length Arrays (VLAs).
+   - No interleaving declarations and code.
+2. FORMATTING & LIMITS:
+   - Indentation: REAL TABS (width 4).
+   - Max 25 lines per function (excluding braces).
+   - Max 80 columns width.
+   - Max 4 parameters per function.
+   - Max 5 local variables per function.
+3. STRUCTURE:
+   - Declarations MUST be at the top of the function.
+   - Separate declarations from code with exactly one empty line.
+   - NEVER initialize variables in the declaration line (e.g., `int i = 0;` is ILLEGAL; split into `int i;` and `i = 0;`).
+4. NAMING CONVENTIONS (snake_case):
+   - Structs: `s_name` | Typedefs: `t_name` | Unions: `u_name` | Globals: `g_name`.
+5. OUTPUT:
+   - Code must compile with `-Wall -Wextra -Werror`.
+   - If logic is complex, suggest helper functions to satisfy the 25-line limit.")
 
           (cpp-42 . "You are an expert C++ mentor at 42 School.
 CRITICAL RULES:
@@ -344,6 +353,20 @@ RULES:
 3. Write concise, pythonic code (list comprehensions where appropriate).
 4. Include docstrings for classes and complex functions.
 5. Prefer modern Python 3.10+ syntax.")))
+  ;; ---------------------------------------------------------------------------
+  ;; 4. KEYBINDINGS PERSONALIZADOS
+  ;; ---------------------------------------------------------------------------
+
+  ;; Desvincula o atalho original "SPC o l a" para que possamos usá-lo como um prefixo.
+  ;; O Doom por padrão mapeia para `llm-add-context`.
+  (map! :leader "o l a" nil)
+
+  ;; Cria o novo "sub-menu" de atalhos para adicionar contexto
+  (map! :leader
+        :prefix ("o l a" . "+Add context")
+        :desc "Add Text (region)" "t" #'gptel-context-add-region
+        :desc "Add Buffer"        "b" #'gptel-context-add-buffer
+        :desc "Add File"          "f" #'gptel-context-add-file)
 
   ;; Função para trocar o prompt automaticamente baseada no modo
   (defun my-gptel-setup-directive ()
