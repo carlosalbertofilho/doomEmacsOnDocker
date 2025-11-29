@@ -377,7 +377,7 @@ RULES:
   (map! :leader
         :prefix ("o l a" . "+Add context")
         :desc "Add Text (region)" "t" #'gptel-context-add-region
-        :desc "Add Buffer"        "b" #'gptel-context-add-buffer
+        :desc "Add Buffer"        "b" #'gptel-context-add
         :desc "Add File"          "f" #'gptel-context-add-file)
 
   ;; Função para trocar o prompt automaticamente baseada no modo
