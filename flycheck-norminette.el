@@ -114,8 +114,7 @@ See URL `https://github.com/42School/norminette' for more information."
   :predicate
   (lambda ()
     (and buffer-file-name
-         (or (string-match-p "\\.c\\'" buffer-file-name)
-             (string-match-p "\\.h\\'" buffer-file-name))
+         (string-match-p "\\.\\(c\\|h\\|cpp\\|hpp\\)\\'" buffer-file-name)
          (executable-find flycheck-norminette-executable))))
 
 ;; =============================================================================
@@ -171,8 +170,7 @@ See URL `https://github.com/42School/norminette' for more information."
 
 Add this to your C mode hook to enable automatic checking."
   (when (and buffer-file-name
-             (or (string-match-p "\\.c\\'" buffer-file-name)
-                 (string-match-p "\\.h\\'" buffer-file-name))
+             (string-match-p "\\.\\(c\\|h\\|cpp\\|hpp\\)\\'" buffer-file-name)
              (executable-find flycheck-norminette-executable))
     (flycheck-mode 1)
     (flycheck-select-checker 'c-norminette)))

@@ -108,9 +108,9 @@
 
   ;; 2. SELEÇÃO E NAVEGAÇÃO
   (setq corfu-cycle t)                   ; Permite navegar do último para o primeiro
-  (setq corfu-preselect 'first)          ; [MELHORIA] Seleciona o primeiro candidato automaticamente (mais rápido que 'prompt)
-  (setq corfu-quit-no-match 'separator)  ; Comportamento ao sair
-  (setq corfu-quit-at-boundary t)        ; Sair ao encontrar separador
+  ;(setq corfu-preselect 'first)          ; [MELHORIA] Seleciona o primeiro candidato automaticamente (mais rápido que 'prompt)
+  ;(setq corfu-quit-no-match 'separator)  ; Comportamento ao sair
+  ;(setq corfu-quit-at-boundary t)        ; Sair ao encontrar separador
 
   ;; 3. HISTÓRICO (Aprendizado)
   ;; O Corfu lembrará suas escolhas frequentes e as colocará no topo
@@ -179,102 +179,98 @@
   (flycheck-add-next-checker 'c-norminette 'c/c++-clang)
 )
 
-
-;; =============================================================================
-;; EGLOT CONFIGURATION - LSP for C with 42 Style
-;; =============================================================================
-
-
-(after! eglot
-  ;; Diz ao Eglot para ignorar os recursos de formatação do servidor (clangd).
-  ;; Assim, o Emacs (sua função my-c-42-style) mantém o controle total dos Tabs.
-  (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
-  (add-to-list 'eglot-ignored-server-capabilities :documentRangeFormattingProvider)
-  (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
-
-
-  (defun my-chain-norminette-to-eglot ()
-    "Encadeia a norminette após o eglot-check em buffers C/C++."
-    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode 'flycheck-eglot-mode)
-      ;; Adiciona c-norminette como o PRÓXIMO checker após o eglot
-      (flycheck-add-next-checker 'eglot-check 'c-norminette 'append)))
-
-  ;; Adiciona esse hook para rodar toda vez que o Eglot iniciar num buffer
-  (add-hook 'eglot-managed-mode-hook #'my-chain-norminette-to-eglot)
-  ;; REeforça o estilo 42
-  (add-hook 'eglot-managed-mode-hook #'my-c-42-style))
-
-
 ;; ---------------------------------------------------------------------------
-;; ESTILO 42 - Configuração Robusta para Tree-Sitter e CC-Mode
+;; 1. Função Central de Estilo 42 (Compatível com cc-mode e Tree-Sitter)
 ;; ---------------------------------------------------------------------------
-
 (defun my-c-42-style ()
-  "Força o estilo da 42 (Tabs reais, largura 4) e desabilita interferências."
+  "Força o estilo da 42 (Tabs reais, largura 4) para C e C++.
+Esta função é segura para ser chamada em qualquer modo C/C++."
   (interactive)
 
-   ;; 1. Configurações Básicas de Buffer (Norma v4.1)
+  ;; Configurações básicas de buffer (comuns a ambos os sistemas)
   (setq-local indent-tabs-mode t        ; Usa TABS reais, não espaços.
-              tab-width 4              ; Largura visual do TAB.
-              c-basic-offset 4         ; Garante que cc-mode também use 4.
-              fill-column 80)          ; Coluna 80 para a linha vertical.
+              tab-width 4               ; Largura visual do TAB.
+              c-basic-offset 4          ; Offset para cc-mode (usado como fallback).
+              fill-column 80)           ; Linha vertical na coluna 80.
 
-  ;; 2. Desabilitar "Adivinhadores" de estilo do Doom/Emacs
+  ;; Desabilita "adivinhadores" de estilo que podem interferir
   (when (fboundp 'dtrt-indent-mode) (dtrt-indent-mode -1))
   (setq-local editorconfig-mode nil)
 
-  ;; 3. Configuração para c-mode (Legacy/CC-Mode)
-  (when (eq major-mode 'c-mode)
-    (c-add-style "42-bsd"
-                 '("bsd"
-                   (c-basic-offset . 4)
-                   (c-tab-always-indent . t)))
-    (c-set-style "42-bsd"))
+  ;; Lógica de indentação específica para cada sistema
+  (if (derived-mode-p 'c-ts-mode 'c++-ts-mode)
+      ;; --- Para TREE-SITTER ---
+      (progn
+        (setq-local c-ts-mode-indent-style 'bsd)
+        (setq-local c-ts-mode-indent-offset 4))
+    ;; --- Para CC-MODE (clássico) ---
+    (when (derived-mode-p 'c-mode 'c++-mode)
+      (c-add-style "42-bsd"
+                   '("bsd" (c-basic-offset . 4) (c-tab-always-indent . t)))
+      (c-set-style "42-bsd")))
 
-  ;; 4. Configuração para c-ts-mode (Tree-Sitter - O Padrão Moderno)
-  (when (or (eq major-mode 'c-ts-mode) (eq major-mode 'c++-ts-mode))
-    (setq-local c-ts-mode-indent-style 'bsd)
-    (setq-local c-ts-mode-indent-offset 4))
-
-  ;; 5. Visualização e Reforço Ativo
+  ;; Reforço visual e limpeza automática
   (display-fill-column-indicator-mode 1)
-
-  ;; Ativa o modo whitespace, mas de forma menos intrusiva
   (setq-local whitespace-style '(face trailing tabs))
   (whitespace-mode 1)
-
-  ;; Isso remove espaços no final da linha automaticamente.
   (add-hook 'before-save-hook #'whitespace-cleanup nil t))
 
-;; Aplicar o hook com prioridade alta (append) para garantir que rode por último
+;; ---------------------------------------------------------------------------
+;; 2. Hooks para aplicar o estilo automaticamente
+;; ---------------------------------------------------------------------------
+;; Aplica o estilo assim que um arquivo C/C++ é aberto
 (add-hook 'c-mode-hook #'my-c-42-style t)
 (add-hook 'c-ts-mode-hook #'my-c-42-style t)
 (add-hook 'c++-mode-hook #'my-c-42-style t)
 (add-hook 'c++-ts-mode-hook #'my-c-42-style t)
 
-;; TAB inteligente: Indenta se no começo da linha, insere TAB se no meio/fim
-(defun my-smart-tab-42 ()
+
+;; ---------------------------------------------------------------------------
+;; 3. Configuração do EGLOT para coexistir com o estilo 42
+;; ---------------------------------------------------------------------------
+(after! eglot
+  ;; PASSO CRÍTICO: Impede que o servidor LSP (clangd) formate o código.
+  ;; Isso garante que ele não substitua nossos TABS por espaços.
+  (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :documentRangeFormattingProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
+
+  ;; Função para encadear a norminette com os diagnósticos do Eglot
+  (defun my-chain-norminette-to-eglot ()
+    "Encadeia a norminette após o eglot-check em buffers C/C++."
+    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
+      (flycheck-add-next-checker 'eglot 'c-norminette 'append)))
+
+  ;; Adiciona os hooks para Eglot
+  (add-hook 'eglot-managed-mode-hook #'my-chain-norminette-to-eglot)
+
+  ;; REFORÇO: Re-aplica nosso estilo sempre que Eglot iniciar.
+  ;; Isso garante que nosso estilo tem a palavra final, mesmo que
+  ;; outro pacote tente alterá-lo durante a inicialização.
+  (add-hook 'eglot-managed-mode-hook #'my-c-42-style))
+
+
+;; ---------------------------------------------------------------------------
+;; MAPEAMENTO DE TECLAS PARA INDENTAÇÃO
+;; ---------------------------------------------------------------------------
+
+(defun my-indent-line-or-region ()
+  "Indenta a região se ativa, senão a linha atual."
   (interactive)
-  (if (save-excursion
-        (skip-chars-backward " \t")
-        (bolp))
-      ;; Se estamos no começo da linha (ou só tem espaço antes), indentar
-      (if (derived-mode-p 'c-ts-mode 'c++-ts-mode)
-          (call-interactively #'indent-for-tab-command) ; Tree-sitter
-        (c-indent-line-or-region))                      ; CC-mode
-    ;; Se estamos no meio do texto, inserir TAB real
-    (insert "\t")))
+  (if (region-active-p)
+      (indent-region (region-beginning) (region-end))
+    ;; `indent-for-tab-command` é um comando inteligente que funciona bem
+    ;; tanto para cc-mode quanto para tree-sitter.
+    (indent-for-tab-command)))
 
-;; Força o bind do TAB
-(map! :after cc-mode
-      :map c-mode-base-map
-      "<tab>" #'my-smart-tab-42
-      "TAB"   #'my-smart-tab-42)
-
-(map! :after c-ts-mode
-      :map c-ts-mode-map
-      "<tab>" #'my-smart-tab-42
-      "TAB"   #'my-smart-tab-42)
+;; Força TAB a ser literal e C-<tab> a indentar
+(map! :after (cc-mode c-ts-mode)
+      :map (c-mode-base-map c-ts-mode-map c++-ts-mode-map)
+      ;; TAB insere um caractere de tabulação literal
+      "<tab>" #'self-insert-command
+      "TAB"   #'self-insert-command
+      ;; M-i (Alt+i) faz a indentação (muito mais confiável que C-<tab>)
+      "M-i" #'my-indent-line-or-region)
 
 
 ;; =============================================================================
