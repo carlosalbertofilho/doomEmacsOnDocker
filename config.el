@@ -169,24 +169,36 @@
 (load! "flycheck-norminette")
 
 (after! flycheck
-  ;; 1. Garante que o checker da norminette está pronto para ser usado
+  ;; 1. Setup inicial da Norminette
   (flycheck-norminette-setup)
 
-  ;; 2. Função para adicionar a norminette aos checkers de C/C++
-  (defun my-add-norminette-checker ()
-    (add-to-list 'flycheck-checkers 'c-norminette))
+  ;; 2. Garante que eglot-check esteja desabilitado globalmente
+  (setq-default flycheck-disabled-checkers
+                (append flycheck-disabled-checkers '(eglot-check)))
 
-  ;; 3. Hooks para ativar a função nos modos corretos
-  ;;    Quando um arquivo C/C++ for aberto, a norminette será adicionada
-  ;;    à lista de verificadores que o Flycheck usará.
-  (add-hook 'c-mode-hook #'my-add-norminette-checker)
-  (add-hook 'c-ts-mode-hook #'my-add-norminette-checker)
-  (add-hook 'c++-mode-hook #'my-add-norminette-checker)
-  (add-hook 'c++-ts-mode-hook #'my-add-norminette-checker)
+  ;; 3. Garante que os modos Tree-Sitter e clássicos reconheçam o clang
+  (dolist (mode '(c-mode c-ts-mode c++-mode c++-ts-mode))
+    (flycheck-add-mode 'c/c++-clang mode)
+    (flycheck-add-mode 'c-norminette mode))
 
-  ;; Configuração visual opcional
-  (setq flycheck-indication-mode 'right-fringe)
+  ;; 4. Define a cadeia: Clang roda primeiro -> Se passar (ou rodar), chama Norminette
+  (flycheck-add-next-checker 'c/c++-clang 'c-norminette)
+
+  ;; 5. Função para forçar a seleção do Clang
+  (defun my-force-clang-checker ()
+    "Força o uso do c/c++-clang e ignora o eglot-check."
+    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
+      (flycheck-select-checker 'c/c++-clang)))
+
+  ;; 6. Hooks Críticos:
+  ;; O Eglot tenta sequestrar o flycheck ao iniciar.
+  ;; Usamos o hook do Eglot para redefinir o checker para clang logo após ele carregar.
+  (add-hook 'eglot-managed-mode-hook #'my-force-clang-checker)
+
+  ;; Hooks normais de C/C++ para garantir inicialização
+  (add-hook 'c-mode-common-hook #'my-force-clang-checker)
 )
+
 
 ;; ---------------------------------------------------------------------------
 ;; 1. Função Central de Estilo 42 (Compatível com cc-mode e Tree-Sitter)
@@ -244,11 +256,18 @@ Esta função é segura para ser chamada em qualquer modo C/C++."
   (add-to-list 'eglot-ignored-server-capabilities :documentRangeFormattingProvider)
   (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
 
-
   ;; REFORÇO: Re-aplica nosso estilo sempre que Eglot iniciar.
   ;; Isso garante que nosso estilo tem a palavra final, mesmo que
   ;; outro pacote tente alterá-lo durante a inicialização.
-  (add-hook 'eglot-managed-mode-hook #'my-c-42-style))
+  (add-hook 'eglot-managed-mode-hook #'my-c-42-style)
+
+  ;; força clangd para C/C++
+  ;;(set-eglot-client! 'c-mode  '("clangd"))
+  ;;(set-eglot-client! 'c++-mode '("clangd"))
+  ;; se estiver usando tree-sitter:
+  ;;(set-eglot-client! 'c-ts-mode  '("clangd"))
+  ;;(set-eglot-client! 'c++-ts-mode '("clangd"))
+  )
 
 
 ;; ---------------------------------------------------------------------------
