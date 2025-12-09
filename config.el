@@ -169,14 +169,23 @@
 (load! "flycheck-norminette")
 
 (after! flycheck
-  ;; Configura o checker básico (para quando não estiver usando LSP)
+  ;; 1. Garante que o checker da norminette está pronto para ser usado
   (flycheck-norminette-setup)
 
-  ;; Garante que warnings do compilador não escondam erros da norminette
-  (setq flycheck-indication-mode 'right-fringe) ; Mostra ícones na direita para não poluir
+  ;; 2. Função para adicionar a norminette aos checkers de C/C++
+  (defun my-add-norminette-checker ()
+    (add-to-list 'flycheck-checkers 'c-norminette))
 
-  ;; Diz explicitamente: Se rodar c-norminette, rode c/c++-clang em seguida.
-  (flycheck-add-next-checker 'c-norminette 'c/c++-clang)
+  ;; 3. Hooks para ativar a função nos modos corretos
+  ;;    Quando um arquivo C/C++ for aberto, a norminette será adicionada
+  ;;    à lista de verificadores que o Flycheck usará.
+  (add-hook 'c-mode-hook #'my-add-norminette-checker)
+  (add-hook 'c-ts-mode-hook #'my-add-norminette-checker)
+  (add-hook 'c++-mode-hook #'my-add-norminette-checker)
+  (add-hook 'c++-ts-mode-hook #'my-add-norminette-checker)
+
+  ;; Configuração visual opcional
+  (setq flycheck-indication-mode 'right-fringe)
 )
 
 ;; ---------------------------------------------------------------------------
@@ -235,14 +244,6 @@ Esta função é segura para ser chamada em qualquer modo C/C++."
   (add-to-list 'eglot-ignored-server-capabilities :documentRangeFormattingProvider)
   (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
 
-  ;; Função para encadear a norminette com os diagnósticos do Eglot
-  (defun my-chain-norminette-to-eglot ()
-    "Encadeia a norminette após o eglot-check em buffers C/C++."
-    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
-      (flycheck-add-next-checker 'eglot 'c-norminette 'append)))
-
-  ;; Adiciona os hooks para Eglot
-  (add-hook 'eglot-managed-mode-hook #'my-chain-norminette-to-eglot)
 
   ;; REFORÇO: Re-aplica nosso estilo sempre que Eglot iniciar.
   ;; Isso garante que nosso estilo tem a palavra final, mesmo que
