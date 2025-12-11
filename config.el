@@ -103,6 +103,7 @@
 ;; =============================================================================
 
 (after! corfu
+
   ;; 1. COMPORTAMENTO GERAL
   (setq corfu-auto t)                    ; Habilita auto-popup
   (setq corfu-auto-delay 0.1)            ; Mais rápido (0.1s). Se ficar pesado no Docker, volte para 0.2
@@ -110,9 +111,6 @@
 
   ;; 2. SELEÇÃO E NAVEGAÇÃO
   (setq corfu-cycle t)                   ; Permite navegar do último para o primeiro
-  ;(setq corfu-preselect 'first)          ; [MELHORIA] Seleciona o primeiro candidato automaticamente (mais rápido que 'prompt)
-  ;(setq corfu-quit-no-match 'separator)  ; Comportamento ao sair
-  ;(setq corfu-quit-at-boundary t)        ; Sair ao encontrar separador
 
   ;; 3. HISTÓRICO (Aprendizado)
   ;; O Corfu lembrará suas escolhas frequentes e as colocará no topo
@@ -122,7 +120,7 @@
 
   ;; 4. DOCUMENTAÇÃO FLUTUANTE (Semelhante ao VS Code)
   ;; Mostra documentação/assinatura da função ao lado do popup
-  (corfu-popupinfo-mode 1)
+  ;;(corfu-popupinfo-mode 1)
   (setq corfu-popupinfo-delay '(0.5 . 0.2)) ; Delay para aparecer (0.5s) e atualizar (0.2s)
   (setq corfu-popupinfo-max-width 70)
   (setq corfu-popupinfo-max-height 20)
@@ -249,9 +247,11 @@ Esta função é segura para ser chamada em qualquer modo C/C++."
       ;; a. Aplica nosso estilo de indentação 42
       (my-c-42-style)
 
+      (flycheck-define-checker 'c-norminette t)
+
       ;; b. A MÁGICA: Configura a cadeia de checkers.
       ;;    Neste ponto, 'eglot-check' JÁ EXISTE com certeza.
-      (flycheck-add-next-checker 'eglot-check 'c-norminette t)))
+      (flycheck-add-next-checker 'c-norminette 'c/c++-clang t)))
 
 
   ;; PASSO 3: Adiciona nossa função ao hook correto.
