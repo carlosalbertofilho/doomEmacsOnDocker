@@ -170,32 +170,21 @@
 ;; Load and setup Flycheck Norminette integration
 (load! "flycheck-norminette")
 
+;; ---------------------------------------------------------------------------
+;; FLYCHECK E EGLOT - A CONFIGURAÇÃO CORRETA
+;; ---------------------------------------------------------------------------
+
 (after! flycheck
-  ;; Carrega sua integração customizada com a Norminette
+  ;; 1. Configura a Norminette
   (flycheck-norminette-setup)
 
-  ;; 1. Informa ao Flycheck que 'c/c++-clang' é um checker preferencial para modos C/C++.
-  ;;    Esta é a forma correta, chamando a função para cada modo na lista.
-  (dolist (mode '(c-ts-mode c-mode c++-ts-mode c++-mode))
-    (flycheck-add-mode 'c/c++-clang mode))
-
-  ;; 2. Define a cadeia de checkers: clang roda primeiro, depois a norminette.
+  ;; 2. Define a cadeia de checkers: clang -> norminette
   (flycheck-add-next-checker 'c-norminette 'c/c++-clang t)
 
-  ;; 3. Função central para configurar os checkers em buffers C/C++
-  (defun my-setup-c-checkers ()
-    "Seleciona a cadeia clang->norminette e desabilita o checker do Eglot."
-    (flycheck-define-checker 'c/c++-clang t)
-    (add-to-list 'flycheck-disabled-checkers 'eglot-check t))
-
-  ;; 4. Hooks para garantir que nossa função seja executada
-  (add-hook 'c-mode-common-hook #'my-setup-c-checkers)
-  (add-hook 'eglot-managed-mode-hook #'my-setup-c-checkers)
 )
 
-
 ;; ---------------------------------------------------------------------------
-;; 1. Função Central de Estilo 42 (Compatível com cc-mode e Tree-Sitter)
+;; Estilo 42 (Compatível com cc-mode e Tree-Sitter)
 ;; ---------------------------------------------------------------------------
 (defun my-c-42-style ()
   "Força o estilo da 42 (Tabs reais, largura 4) para C e C++.
@@ -243,17 +232,31 @@ Esta função é segura para ser chamada em qualquer modo C/C++."
 ;; ---------------------------------------------------------------------------
 ;; 3. Configuração do EGLOT para coexistir com o estilo 42
 ;; ---------------------------------------------------------------------------
+
 (after! eglot
-  ;; PASSO CRÍTICO: Impede que o servidor LSP (clangd) formate o código.
-  ;; Isso garante que ele não substitua nossos TABS por espaços.
+  ;; PASSO 1: Impede que o clangd formate seu código.
   (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
   (add-to-list 'eglot-ignored-server-capabilities :documentRangeFormattingProvider)
   (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
 
-  ;; REFORÇO: Re-aplica nosso estilo sempre que Eglot iniciar.
-  ;; Isso garante que nosso estilo tem a palavra final, mesmo que
-  ;; outro pacote tente alterá-lo durante a inicialização.
-  (add-hook 'eglot-managed-mode-hook #'my-c-42-style)
+
+  ;; PASSO 2: Cria uma função única para ser executada QUANDO o Eglot conectar.
+  (defun my-eglot-c-mode-setup ()
+    "Função executada depois que o Eglot se conecta em um buffer C/C++."
+    ;; Garante que só vamos agir em modos de C/C++
+    (when (derived-mode-p 'c-mode 'c++-mode 'c-ts-mode 'c++-ts-mode)
+
+      ;; a. Aplica nosso estilo de indentação 42
+      (my-c-42-style)
+
+      ;; b. A MÁGICA: Configura a cadeia de checkers.
+      ;;    Neste ponto, 'eglot-check' JÁ EXISTE com certeza.
+      (flycheck-add-next-checker 'eglot-check 'c-norminette t)))
+
+
+  ;; PASSO 3: Adiciona nossa função ao hook correto.
+  ;; 'eglot-managed-mode-hook' roda toda vez que Eglot assume um buffer.
+  (add-hook 'eglot-managed-mode-hook #'my-eglot-c-mode-setup)
 )
 
 
