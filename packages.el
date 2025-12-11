@@ -57,5 +57,5 @@
 ;; AI ASSISTANTS
 ;; =============================================================================
 
-;; Ellama - AI assistant with multiple providers support
-(package! ellama)
+;; Ef themes from protesilaos
+(package! ef-themes)

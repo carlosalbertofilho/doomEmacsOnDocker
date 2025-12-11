@@ -48,7 +48,8 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-Iosvkem)
+;; (setq doom-theme 'doom-Iosvkem)
+(setq doom-theme 'ef-trio-dark)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -95,6 +96,7 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+
 
 ;; =============================================================================
 ;; CORFU MODE - AUTOCOMPLETION
@@ -169,34 +171,26 @@
 (load! "flycheck-norminette")
 
 (after! flycheck
-  ;; 1. Setup inicial da Norminette
+  ;; Carrega sua integração customizada com a Norminette
   (flycheck-norminette-setup)
 
-  ;; 2. Garante que eglot-check esteja desabilitado globalmente
-  (setq-default flycheck-disabled-checkers
-                (append flycheck-disabled-checkers '(eglot-check)))
+  ;; 1. Informa ao Flycheck que 'c/c++-clang' é um checker preferencial para modos C/C++.
+  ;;    Esta é a forma correta, chamando a função para cada modo na lista.
+  (dolist (mode '(c-ts-mode c-mode c++-ts-mode c++-mode))
+    (flycheck-add-mode 'c/c++-clang mode))
 
-  ;; 3. Garante que os modos Tree-Sitter e clássicos reconheçam o clang
-  (dolist (mode '(c-mode c-ts-mode c++-mode c++-ts-mode))
-    (flycheck-add-mode 'c/c++-clang mode)
-    (flycheck-add-mode 'c-norminette mode))
+  ;; 2. Define a cadeia de checkers: clang roda primeiro, depois a norminette.
+  (flycheck-add-next-checker 'c-norminette 'c/c++-clang t)
 
-  ;; 4. Define a cadeia: Clang roda primeiro -> Se passar (ou rodar), chama Norminette
-  (flycheck-add-next-checker 'c/c++-clang 'c-norminette)
+  ;; 3. Função central para configurar os checkers em buffers C/C++
+  (defun my-setup-c-checkers ()
+    "Seleciona a cadeia clang->norminette e desabilita o checker do Eglot."
+    (flycheck-define-checker 'c/c++-clang t)
+    (add-to-list 'flycheck-disabled-checkers 'eglot-check t))
 
-  ;; 5. Função para forçar a seleção do Clang
-  (defun my-force-clang-checker ()
-    "Força o uso do c/c++-clang e ignora o eglot-check."
-    (when (derived-mode-p 'c-mode 'c-ts-mode 'c++-mode 'c++-ts-mode)
-      (flycheck-select-checker 'c/c++-clang)))
-
-  ;; 6. Hooks Críticos:
-  ;; O Eglot tenta sequestrar o flycheck ao iniciar.
-  ;; Usamos o hook do Eglot para redefinir o checker para clang logo após ele carregar.
-  (add-hook 'eglot-managed-mode-hook #'my-force-clang-checker)
-
-  ;; Hooks normais de C/C++ para garantir inicialização
-  (add-hook 'c-mode-common-hook #'my-force-clang-checker)
+  ;; 4. Hooks para garantir que nossa função seja executada
+  (add-hook 'c-mode-common-hook #'my-setup-c-checkers)
+  (add-hook 'eglot-managed-mode-hook #'my-setup-c-checkers)
 )
 
 
@@ -260,14 +254,7 @@ Esta função é segura para ser chamada em qualquer modo C/C++."
   ;; Isso garante que nosso estilo tem a palavra final, mesmo que
   ;; outro pacote tente alterá-lo durante a inicialização.
   (add-hook 'eglot-managed-mode-hook #'my-c-42-style)
-
-  ;; força clangd para C/C++
-  ;;(set-eglot-client! 'c-mode  '("clangd"))
-  ;;(set-eglot-client! 'c++-mode '("clangd"))
-  ;; se estiver usando tree-sitter:
-  ;;(set-eglot-client! 'c-ts-mode  '("clangd"))
-  ;;(set-eglot-client! 'c++-ts-mode '("clangd"))
-  )
+)
 
 
 ;; ---------------------------------------------------------------------------
