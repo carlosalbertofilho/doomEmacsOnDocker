@@ -59,3 +59,6 @@
 
 ;; Ef themes from protesilaos
 (package! ef-themes)
+
+;; Eglot and Flycheck integration
+(package! flycheck-eglot)

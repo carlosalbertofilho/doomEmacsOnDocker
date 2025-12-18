@@ -164,21 +164,32 @@
 ;; Load and enable 42 header
 (load! "header42")
 (header-42-enable)
-
 ;; Load and setup Flycheck Norminette integration
 (load! "flycheck-norminette")
 
 ;; ---------------------------------------------------------------------------
 ;; FLYCHECK E EGLOT - A CONFIGURAÇÃO CORRETA
 ;; ---------------------------------------------------------------------------
-
 (after! flycheck
   ;; 1. Configura a Norminette
   (flycheck-norminette-setup)
+)
 
-  ;; 2. Define a cadeia de checkers: clang -> norminette
-  (flycheck-add-next-checker 'c-norminette 'c/c++-clang t)
+(after! flycheck-eglot
+  (setq flycheck-eglot-exclusive nil)
+)
 
+;; ---------------------------------------------------------------------------
+;; FUNÇÃO AUXILIAR PARA INDENTAÇÃO
+;; ---------------------------------------------------------------------------
+(defun my-indent-line-or-region ()
+  "Indenta a região se ativa, senão a linha atual."
+  (interactive)
+  (if (region-active-p)
+      (indent-region (region-beginning) (region-end))
+    ;; `indent-for-tab-command` é um comando inteligente que funciona bem
+    ;; tanto para cc-mode quanto para tree-sitter.
+    (indent-for-tab-command))
 )
 
 ;; ---------------------------------------------------------------------------
@@ -203,85 +214,61 @@ Esta função é segura para ser chamada em qualquer modo C/C++."
   (if (derived-mode-p 'c-ts-mode 'c++-ts-mode)
       ;; --- Para TREE-SITTER ---
       (progn
-        (setq-local c-ts-mode-indent-style 'bsd)
-        (setq-local c-ts-mode-indent-offset 4))
+        (setq-local c-ts-mode-indent-style 'linux)
+        (setq-local c-ts-mode-indent-offset 4)
+        ;; CORREÇÃO: Força chaves a ficarem no início da linha (Norma 42)
+        (setq-local c-ts-mode-indent-rules
+                    '(((statement-block) . parent-bol))))
     ;; --- Para CC-MODE (clássico) ---
     (when (derived-mode-p 'c-mode 'c++-mode)
-      (c-add-style "42-bsd"
-                   '("bsd" (c-basic-offset . 4) (c-tab-always-indent . t)))
-      (c-set-style "42-bsd")))
+      (c-add-style "42-style"
+                   '("linux" (c-basic-offset . 4) (c-tab-always-indent . t)))
+      (c-set-style "42-style")))
 
   ;; Reforço visual e limpeza automática
   (display-fill-column-indicator-mode 1)
-  (setq-local whitespace-style '(face trailing tabs))
+  (setq-local whitespace-style '(face trailing tabs tab-mark))
+  (setq-local whitespace-display-mappings '((tab-mark 9 [187 9] [92 9])))
   (whitespace-mode 1)
-  (add-hook 'before-save-hook #'whitespace-cleanup nil t))
+  (add-hook 'before-save-hook #'whitespace-cleanup nil t)
 
-;; ---------------------------------------------------------------------------
-;; 2. Hooks para aplicar o estilo automaticamente
-;; ---------------------------------------------------------------------------
+  ;; Adiciona o hook do header 42 de forma local ao buffer.
+  (add-hook 'before-save-hook #'stdheader nil t)
+
+  ;; MAPEAMENTO DE TECLAS (LOCAL AO BUFFER)
+  ;; Garante que TAB insira um caractere real e M-i indente o código.
+  (local-set-key (kbd "<tab>") #'self-insert-command)
+  (local-set-key (kbd "TAB") #'self-insert-command) ; Para alguns terminais
+  (local-set-key (kbd "M-i") #'my-indent-line-or-region))
+
 ;; Aplica o estilo assim que um arquivo C/C++ é aberto
 (add-hook 'c-mode-hook #'my-c-42-style t)
 (add-hook 'c-ts-mode-hook #'my-c-42-style t)
 (add-hook 'c++-mode-hook #'my-c-42-style t)
 (add-hook 'c++-ts-mode-hook #'my-c-42-style t)
 
-
 ;; ---------------------------------------------------------------------------
 ;; 3. Configuração do EGLOT para coexistir com o estilo 42
 ;; ---------------------------------------------------------------------------
-
 (after! eglot
   ;; PASSO 1: Impede que o clangd formate seu código.
   (add-to-list 'eglot-ignored-server-capabilities :documentFormattingProvider)
   (add-to-list 'eglot-ignored-server-capabilities :documentRangeFormattingProvider)
   (add-to-list 'eglot-ignored-server-capabilities :documentOnTypeFormattingProvider)
 
+  ;; PASSO 2: Cria uma função para configurar a cadeia de checkers APÓS o Eglot conectar.
+  (defun my-setup-flycheck-chain-after-eglot ()
+    "Configura a cadeia de checkers Flycheck (eglot -> c-norminette)
+depois que o Eglot é ativado no buffer."
+    ;; CORREÇÃO: Verifica se o checker 'eglot' foi realmente criado antes de
+    ;; tentar encadear a Norminette a ele.
+    (when (flycheck-checker-get 'eglot 'start)
+      (flycheck-add-next-checker 'eglot 'c-norminette t)))
 
-  ;; PASSO 2: Cria uma função única para ser executada QUANDO o Eglot conectar.
-  (defun my-eglot-c-mode-setup ()
-    "Função executada depois que o Eglot se conecta em um buffer C/C++."
-    ;; Garante que só vamos agir em modos de C/C++
-    (when (derived-mode-p 'c-mode 'c++-mode 'c-ts-mode 'c++-ts-mode)
-
-      ;; a. Aplica nosso estilo de indentação 42
-      (my-c-42-style)
-
-      (flycheck-define-checker 'c-norminette t)
-
-      ;; b. A MÁGICA: Configura a cadeia de checkers.
-      ;;    Neste ponto, 'eglot-check' JÁ EXISTE com certeza.
-      (flycheck-add-next-checker 'c-norminette 'c/c++-clang t)))
-
-
-  ;; PASSO 3: Adiciona nossa função ao hook correto.
-  ;; 'eglot-managed-mode-hook' roda toda vez que Eglot assume um buffer.
-  (add-hook 'eglot-managed-mode-hook #'my-eglot-c-mode-setup)
-)
-
-
-;; ---------------------------------------------------------------------------
-;; MAPEAMENTO DE TECLAS PARA INDENTAÇÃO
-;; ---------------------------------------------------------------------------
-
-(defun my-indent-line-or-region ()
-  "Indenta a região se ativa, senão a linha atual."
-  (interactive)
-  (if (region-active-p)
-      (indent-region (region-beginning) (region-end))
-    ;; `indent-for-tab-command` é um comando inteligente que funciona bem
-    ;; tanto para cc-mode quanto para tree-sitter.
-    (indent-for-tab-command)))
-
-;; Força TAB a ser literal e C-<tab> a indentar
-(map! :after (cc-mode c-ts-mode)
-      :map (c-mode-base-map c-ts-mode-map c++-ts-mode-map)
-      ;; TAB insere um caractere de tabulação literal
-      "<tab>" #'self-insert-command
-      "TAB"   #'self-insert-command
-      ;; M-i (Alt+i) faz a indentação (muito mais confiável que C-<tab>)
-      "M-i" #'my-indent-line-or-region)
-
+  ;; PASSO 3: Adiciona a função ao hook correto.
+  ;; 'eglot-managed-mode-hook' roda toda vez que Eglot assume um buffer,
+  ;; garantindo que a configuração seja feita no momento certo.
+  (add-hook 'eglot-managed-mode-hook #'my-setup-flycheck-chain-after-eglot))
 
 ;; =============================================================================
 ;; GPTEL Configuration
